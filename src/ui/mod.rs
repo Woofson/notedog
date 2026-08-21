@@ -25,11 +25,13 @@ pub fn render_ui(f: &mut Frame, app: &mut App) {
         f.render_widget(bg_block, size);
     }
 
+    let show_bar = app.config.show_help_bar;
+
     let chunks = Layout::default()
         .direction(Direction::Vertical)
         .constraints([
-            Constraint::Min(10),   // Main content area
-            Constraint::Length(1), // Bottom Status / Help bar
+            Constraint::Min(10),                               // Main content area
+            Constraint::Length(if show_bar { 1 } else { 0 }), // Bottom Status / Help bar
         ])
         .split(size);
 
@@ -125,7 +127,9 @@ pub fn render_ui(f: &mut Frame, app: &mut App) {
     }
 
     // 3. Status / Help Bar
-    render_status_bar(f, status_area, app, &app.theme);
+    if show_bar {
+        render_status_bar(f, status_area, app, &app.theme);
+    }
 
     // 4. Overlays & Modals
     if app.show_help {
