@@ -59,6 +59,7 @@ pub fn render_navigation_sidebar(
     active_note: usize,
     focused_pane: &str, // "notebooks", "sections", "notes"
     theme: &Theme,
+    icons: &crate::config::IconConfig,
 ) {
     let chunks = Layout::default()
         .direction(Direction::Vertical)
@@ -76,14 +77,14 @@ pub fn render_navigation_sidebar(
         .enumerate()
         .map(|(i, nb)| {
             let is_selected = i == active_nb;
-            let icon = if is_selected { "📚 " } else { "📘 " };
+            let icon = &icons.notebook;
             let style = if is_selected {
                 theme.highlight_style()
             } else {
                 theme.fg_style()
             };
             ListItem::new(Line::from(vec![
-                Span::styled(icon, Style::default().fg(theme.secondary)),
+                Span::styled(icon.as_str(), Style::default().fg(theme.sidebar_title)),
                 Span::styled(nb.name.clone(), style),
             ]))
         })
@@ -93,12 +94,8 @@ pub fn render_navigation_sidebar(
     let nb_block = Block::default()
         .borders(Borders::ALL)
         .border_type(BorderType::Rounded)
-        .border_style(if is_nb_focused {
-            theme.active_sidebar_border_style()
-        } else {
-            theme.border_style()
-        })
-        .title(Span::styled(" ■ NOTEBOOKS ", theme.sidebar_title_style()));
+        .border_style(theme.notebook_border_style(is_nb_focused))
+        .title(Span::styled(format!(" {} NOTEBOOKS ", icons.notebook.trim()), theme.notebook_title_style(is_nb_focused)));
 
     let nb_list = List::new(nb_items).block(nb_block);
     f.render_widget(nb_list, chunks[0]);
@@ -112,14 +109,14 @@ pub fn render_navigation_sidebar(
             .enumerate()
             .map(|(i, sec)| {
                 let is_selected = i == active_sec;
-                let icon = if is_selected { "📂 " } else { "📁 " };
+                let icon = &icons.section;
                 let style = if is_selected {
                     theme.highlight_style()
                 } else {
                     theme.fg_style()
                 };
                 ListItem::new(Line::from(vec![
-                    Span::styled(icon, Style::default().fg(theme.secondary)),
+                    Span::styled(icon.as_str(), Style::default().fg(theme.sidebar_title)),
                     Span::styled(sec.name.clone(), style),
                 ]))
             })
@@ -132,12 +129,8 @@ pub fn render_navigation_sidebar(
     let sec_block = Block::default()
         .borders(Borders::ALL)
         .border_type(BorderType::Rounded)
-        .border_style(if is_sec_focused {
-            theme.active_sidebar_border_style()
-        } else {
-            theme.border_style()
-        })
-        .title(Span::styled(" 📂 SECTIONS ", theme.sidebar_title_style()));
+        .border_style(theme.section_border_style(is_sec_focused))
+        .title(Span::styled(format!(" {} SECTIONS ", icons.section.trim()), theme.section_title_style_comp(is_sec_focused)));
 
     let sec_list = List::new(sec_items).block(sec_block);
     f.render_widget(sec_list, chunks[1]);
@@ -150,7 +143,7 @@ pub fn render_navigation_sidebar(
             .enumerate()
             .map(|(i, note)| {
                 let is_selected = i == active_note;
-                let icon = if note.is_encrypted { "🔒 " } else { "📄 " };
+                let icon = if note.is_encrypted { &icons.encrypted_note } else { &icons.note };
                 let name_style = if is_selected {
                     theme.highlight_style()
                 } else if note.is_encrypted {
@@ -161,7 +154,7 @@ pub fn render_navigation_sidebar(
 
                 let lock_badge = if note.is_encrypted { " [ENC]" } else { "" };
                 ListItem::new(Line::from(vec![
-                    Span::styled(icon, Style::default().fg(if note.is_encrypted { theme.encrypted_tag } else { theme.secondary })),
+                    Span::styled(icon.as_str(), Style::default().fg(if note.is_encrypted { theme.encrypted_tag } else { theme.sidebar_title })),
                     Span::styled(note.name.clone(), name_style),
                     Span::styled(lock_badge, Style::default().fg(theme.encrypted_tag)),
                 ]))
@@ -175,12 +168,8 @@ pub fn render_navigation_sidebar(
     let note_block = Block::default()
         .borders(Borders::ALL)
         .border_type(BorderType::Rounded)
-        .border_style(if is_note_focused {
-            theme.active_sidebar_border_style()
-        } else {
-            theme.border_style()
-        })
-        .title(Span::styled(" 📄 NOTES ", theme.sidebar_title_style()));
+        .border_style(theme.note_border_style(is_note_focused))
+        .title(Span::styled(format!(" {} NOTES ", icons.note.trim()), theme.note_title_style(is_note_focused)));
 
     let note_list = List::new(note_items).block(note_block);
     f.render_widget(note_list, chunks[2]);

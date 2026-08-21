@@ -16,7 +16,7 @@ secrets_file = "~/.config/notedog/secrets.toml"
 # Set true for transparent terminals (uses default terminal background).
 transparent_background = true
 
-# Show bottom status and keybinding bar
+# Show bottom status and keybinding bar (true / false)
 show_help_bar = true
 
 # Default word wrap mode in Note Viewer (true / false)
@@ -33,18 +33,45 @@ default_section_prefix = "Section "
 default_section_postfix = ""
 date_format = "%Y-%m-%d %H:%M"
 
-# 🎨 SUPERFILE AYU DARK THEME CONFIGURATION
+# 🎨 CUSTOMIZABLE SECTION ICONS
+[icons]
+notebook = "📚 "
+section = "📂 "
+note = "📄 "
+encrypted_note = "🔒 "
+preview = "📖 "
+editor = "✏️ "
+
+# 🎨 HUMAN-UNDERSTANDABLE THEME CONFIGURATION
 [theme]
-primary = "#FFB454"       # Ayu Dark Amber Gold (Active borders & primary accent)
-secondary = "#39BAE6"     # Ayu Dark Steel Cyan (Sidebar header, icons, active pills)
-accent = "#FF7733"        # Ayu Dark Warm Coral (Title badges, special tags)
-foreground = "#E6E1CF"    # Ayu Dark Soft Off-White text
-background = "none"       # Transparent background (or #0F1419)
-border = "#1D2433"        # Ayu Dark Muted Slate Gray-Blue border
-highlight_bg = "#1B3B54"  # Ayu Dark Steel Blue selection fill
-highlight_fg = "#59C2FF"  # Ayu Dark Bright Cyan highlight text
-header_1 = "#FF7733"      # Ayu Coral Header 1
-header_2 = "#FFB454"      # Ayu Gold Header 2
-header_3 = "#39BAE6"      # Ayu Cyan Header 3
-code_bg = "#14191F"       # Ayu Dark Slate Code block bg
-encrypted_tag = "#F29668" # Ayu Warm Coral badge for encrypted notes
+active_border = "#FFCC66"         # Main active pane border color (Ayu Gold)
+inactive_border = "#242936"       # Inactive pane border color (Ayu Charcoal Slate)
+sidebar_title = "#36A3D9"         # Sidebar section headers title color (Ayu Cyan)
+active_sidebar_border = "#FF7733" # Active sidebar pane border color (Ayu Coral Orange)
+foreground = "#B3B1AD"           # Default text foreground color (Soft Off-White)
+background = "none"              # Canvas background ("none" for transparent, or "#0F1419")
+highlight_bg = "#1F2430"         # Selected list item background fill (Dark Slate)
+highlight_fg = "#36A3D9"         # Selected list item text color (Ayu Cyan)
+encrypted_tag = "#F07178"        # Encrypted note tag & lock badge color (Coral Red)
+
+# 🖌️ INDIVIDUAL COMPONENT OVERRIDES (OPTIONAL)
+# You can individually customize borders and titles for Notebooks, Sections, Notes, and Preview!
+# notebook_border_active = "#FFCC66"
+# notebook_border_inactive = "#242936"
+# notebook_title_active = "#36A3D9"
+# notebook_title_inactive = "#36A3D9"
+
+# section_border_active = "#FF7733"
+# section_border_inactive = "#242936"
+# section_title_active = "#36A3D9"
+# section_title_inactive = "#36A3D9"
+
+# note_border_active = "#FF7733"
+# note_border_inactive = "#242936"
+# note_title_active = "#36A3D9"
+# note_title_inactive = "#36A3D9"
+
+# preview_border_active = "#FFCC66"
+# preview_border_inactive = "#242936"
+# preview_title_active = "#FFCC66"
+# preview_title_inactive = "#36A3D9"

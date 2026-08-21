@@ -18,31 +18,24 @@ pub fn render_note_preview(
     is_encrypted: bool,
     word_wrap: bool,
     theme: &Theme,
+    icons: &crate::config::IconConfig,
 ) {
     let rendered_lines = render_markdown(markdown_text, theme);
     let line_count = rendered_lines.len();
 
-    let title_prefix = if is_encrypted { " 🔒 " } else { " 📖 " };
+    let title_prefix = if is_encrypted { &icons.encrypted_note } else { &icons.preview };
     let wrap_badge = if word_wrap { "[Wrap: ON]" } else { "[Wrap: OFF]" };
     let full_title = format!("{}{}{} ", title_prefix, title, if is_encrypted { " [Encrypted]" } else { "" });
 
     let block = Block::default()
         .borders(Borders::ALL)
         .border_type(BorderType::Rounded)
-        .border_style(if focused {
-            theme.active_main_border_style()
-        } else {
-            theme.border_style()
-        })
-        .title(if focused {
-            Span::styled(format!(" {} ", full_title.trim()), theme.main_title_style())
-        } else {
-            Span::styled(format!(" {} ", full_title.trim()), theme.title_style())
-        })
+        .border_style(theme.preview_border_style(focused))
+        .title(Span::styled(format!(" {} ", full_title.trim()), theme.preview_title_style(focused)))
         .title_bottom(Line::from(vec![
-            Span::styled(format!(" ┴─ {} Lines ", line_count), Style::default().fg(theme.border)),
-            Span::styled(format!("├── {} ", wrap_badge), Style::default().fg(theme.secondary)),
-            Span::styled("├── 👁 Preview ─┘ ", Style::default().fg(theme.accent).add_modifier(Modifier::BOLD)),
+            Span::styled(format!(" ┴─ {} Lines ", line_count), Style::default().fg(theme.inactive_border)),
+            Span::styled(format!("├── {} ", wrap_badge), Style::default().fg(theme.sidebar_title)),
+            Span::styled(format!("├── {} Preview ─┘ ", icons.preview.trim()), Style::default().fg(theme.active_sidebar_border).add_modifier(Modifier::BOLD)),
         ]));
 
     let mut paragraph = Paragraph::new(rendered_lines)

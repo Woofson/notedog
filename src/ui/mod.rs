@@ -65,6 +65,7 @@ pub fn render_ui(f: &mut Frame, app: &mut App) {
             app.active_note_idx,
             focused_pane,
             &app.theme,
+            &app.config.icons,
         );
 
         // Main Pane: Preview or Built-in Editor
@@ -82,6 +83,7 @@ pub fn render_ui(f: &mut Frame, app: &mut App) {
                     app.is_current_note_encrypted(),
                     app.word_wrap,
                     &app.theme,
+                    &app.config.icons,
                 );
             }
             ViewMode::Editor => {
@@ -93,6 +95,7 @@ pub fn render_ui(f: &mut Frame, app: &mut App) {
                     &note_title,
                     is_main_focused,
                     &app.theme,
+                    &app.config.icons,
                 );
             }
         }
@@ -111,6 +114,7 @@ pub fn render_ui(f: &mut Frame, app: &mut App) {
                     app.is_current_note_encrypted(),
                     app.word_wrap,
                     &app.theme,
+                    &app.config.icons,
                 );
             }
             ViewMode::Editor => {
@@ -121,6 +125,7 @@ pub fn render_ui(f: &mut Frame, app: &mut App) {
                     &format!("FULLSCREEN: {}", note_title),
                     true,
                     &app.theme,
+                    &app.config.icons,
                 );
             }
         }

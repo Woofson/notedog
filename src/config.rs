@@ -9,6 +9,42 @@ fn default_section_prefix() -> String { "Section ".to_string() }
 fn default_section_postfix() -> String { "".to_string() }
 fn default_date_format() -> String { "%Y-%m-%d %H:%M".to_string() }
 
+fn default_notebook_icon() -> String { "📚 ".to_string() }
+fn default_section_icon() -> String { "📂 ".to_string() }
+fn default_note_icon() -> String { "📄 ".to_string() }
+fn default_encrypted_note_icon() -> String { "🔒 ".to_string() }
+fn default_preview_icon() -> String { "📖 ".to_string() }
+fn default_editor_icon() -> String { "✏️ ".to_string() }
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct IconConfig {
+    #[serde(default = "default_notebook_icon")]
+    pub notebook: String,
+    #[serde(default = "default_section_icon")]
+    pub section: String,
+    #[serde(default = "default_note_icon")]
+    pub note: String,
+    #[serde(default = "default_encrypted_note_icon")]
+    pub encrypted_note: String,
+    #[serde(default = "default_preview_icon")]
+    pub preview: String,
+    #[serde(default = "default_editor_icon")]
+    pub editor: String,
+}
+
+impl Default for IconConfig {
+    fn default() -> Self {
+        Self {
+            notebook: default_notebook_icon(),
+            section: default_section_icon(),
+            note: default_note_icon(),
+            encrypted_note: default_encrypted_note_icon(),
+            preview: default_preview_icon(),
+            editor: default_editor_icon(),
+        }
+    }
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Config {
     pub note_folder: String,
@@ -29,6 +65,9 @@ pub struct Config {
     pub default_section_postfix: String,
     #[serde(default = "default_date_format")]
     pub date_format: String,
+
+    #[serde(default)]
+    pub icons: IconConfig,
 
     #[serde(default)]
     pub theme: ThemeConfig,
@@ -58,6 +97,7 @@ impl Default for Config {
             default_section_prefix: default_section_prefix(),
             default_section_postfix: default_section_postfix(),
             date_format: default_date_format(),
+            icons: IconConfig::default(),
             theme: ThemeConfig::default(),
         }
     }

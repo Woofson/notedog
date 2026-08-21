@@ -15,6 +15,7 @@ pub fn render_editor_view(
     note_name: &str,
     focused: bool,
     theme: &Theme,
+    icons: &crate::config::IconConfig,
 ) {
     let chunks = Layout::default()
         .direction(Direction::Vertical)
@@ -27,24 +28,16 @@ pub fn render_editor_view(
     let visible_height = main_area.height.saturating_sub(2) as usize;
 
     let modified_badge = if editor.is_modified { " [*] " } else { " " };
-    let title_str = format!(" ✏️ EDITING: {}{} ", note_name, modified_badge);
+    let title_str = format!(" {} EDITING: {}{} ", icons.editor.trim(), note_name, modified_badge);
 
     let block = Block::default()
         .borders(Borders::ALL)
         .border_type(BorderType::Rounded)
-        .border_style(if focused {
-            theme.active_main_border_style()
-        } else {
-            theme.border_style()
-        })
-        .title(if focused {
-            Span::styled(format!(" {} ", title_str.trim()), theme.main_title_style())
-        } else {
-            Span::styled(format!(" {} ", title_str.trim()), theme.title_style())
-        })
+        .border_style(theme.preview_border_style(focused))
+        .title(Span::styled(format!(" {} ", title_str.trim()), theme.preview_title_style(focused)))
         .title_bottom(Line::from(vec![
-            Span::styled(format!(" ┴─ Line {}/{} ", editor.cursor_y + 1, editor.lines.len()), Style::default().fg(theme.border)),
-            Span::styled("├── ✏️ Built-in Editor ─┘ ", Style::default().fg(theme.primary).add_modifier(Modifier::BOLD)),
+            Span::styled(format!(" ┴─ Line {}/{} ", editor.cursor_y + 1, editor.lines.len()), Style::default().fg(theme.inactive_border)),
+            Span::styled(format!("├── {} Built-in Editor ─┘ ", icons.editor.trim()), Style::default().fg(theme.active_border).add_modifier(Modifier::BOLD)),
         ]));
 
     let mut display_lines: Vec<Line> = Vec::new();

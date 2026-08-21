@@ -1,51 +1,123 @@
 use ratatui::style::{Color, Modifier, Style};
 use serde::{Deserialize, Serialize};
 
+fn default_active_border() -> String { "#FFCC66".to_string() }
+fn default_inactive_border() -> String { "#242936".to_string() }
+fn default_sidebar_title() -> String { "#36A3D9".to_string() }
+fn default_active_sidebar_border() -> String { "#FF7733".to_string() }
+fn default_foreground() -> String { "#B3B1AD".to_string() }
+fn default_background() -> String { "none".to_string() }
+fn default_highlight_bg() -> String { "#1F2430".to_string() }
+fn default_highlight_fg() -> String { "#36A3D9".to_string() }
+fn default_header_1() -> String { "#FF7733".to_string() }
+fn default_header_2() -> String { "#FFCC66".to_string() }
+fn default_header_3() -> String { "#36A3D9".to_string() }
+fn default_code_bg() -> String { "#14191F".to_string() }
+fn default_encrypted_tag() -> String { "#F07178".to_string() }
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ThemeConfig {
-    pub primary: String,
-    pub secondary: String,
-    pub accent: String,
-    pub background: String,
+    #[serde(alias = "primary", default = "default_active_border")]
+    pub active_border: String,
+
+    #[serde(alias = "border", default = "default_inactive_border")]
+    pub inactive_border: String,
+
+    #[serde(alias = "secondary", default = "default_sidebar_title")]
+    pub sidebar_title: String,
+
+    #[serde(alias = "accent", default = "default_active_sidebar_border")]
+    pub active_sidebar_border: String,
+
+    #[serde(default = "default_foreground")]
     pub foreground: String,
-    pub border: String,
+
+    #[serde(default = "default_background")]
+    pub background: String,
+
+    #[serde(default = "default_highlight_bg")]
     pub highlight_bg: String,
+
+    #[serde(default = "default_highlight_fg")]
     pub highlight_fg: String,
+
+    #[serde(default = "default_header_1")]
     pub header_1: String,
+    #[serde(default = "default_header_2")]
     pub header_2: String,
+    #[serde(default = "default_header_3")]
     pub header_3: String,
+    #[serde(default = "default_code_bg")]
     pub code_bg: String,
+    #[serde(default = "default_encrypted_tag")]
     pub encrypted_tag: String,
+
+    // Specific component border & title overrides
+    pub notebook_border_active: Option<String>,
+    pub notebook_border_inactive: Option<String>,
+    pub notebook_title_active: Option<String>,
+    pub notebook_title_inactive: Option<String>,
+
+    pub section_border_active: Option<String>,
+    pub section_border_inactive: Option<String>,
+    pub section_title_active: Option<String>,
+    pub section_title_inactive: Option<String>,
+
+    pub note_border_active: Option<String>,
+    pub note_border_inactive: Option<String>,
+    pub note_title_active: Option<String>,
+    pub note_title_inactive: Option<String>,
+
+    pub preview_border_active: Option<String>,
+    pub preview_border_inactive: Option<String>,
+    pub preview_title_active: Option<String>,
+    pub preview_title_inactive: Option<String>,
 }
 
 impl Default for ThemeConfig {
     fn default() -> Self {
         Self {
-            primary: "#FFCC66".to_string(),      // Ayu Gold (file_panel_border_active / file_panel_top_path)
-            secondary: "#36A3D9".to_string(),    // Ayu Cyan (sidebar_title / item_selected_fg / hotkeys)
-            accent: "#FF7733".to_string(),       // Ayu Coral Orange (sidebar_border_active / badges)
-            background: "none".to_string(),      // Transparent background (or #0F1419 full_screen_bg)
-            foreground: "#B3B1AD".to_string(),    // Ayu Soft Off-White (full_screen_fg)
-            border: "#242936".to_string(),        // Ayu Charcoal Slate (file_panel_border / footer_border)
-            highlight_bg: "#1F2430".to_string(),  // Ayu Dark Slate (sidebar_item_selected_bg)
-            highlight_fg: "#36A3D9".to_string(),  // Ayu Cyan (sidebar_item_selected_fg)
-            header_1: "#FF7733".to_string(),      // Ayu Coral Header 1
-            header_2: "#FFCC66".to_string(),      // Ayu Gold Header 2
-            header_3: "#36A3D9".to_string(),      // Ayu Cyan Header 3
-            code_bg: "#14191F".to_string(),       // Ayu Dark Slate Code block bg
-            encrypted_tag: "#F07178".to_string(), // Ayu Coral Red (modal_cancel_bg / encrypted notes)
+            active_border: default_active_border(),
+            inactive_border: default_inactive_border(),
+            sidebar_title: default_sidebar_title(),
+            active_sidebar_border: default_active_sidebar_border(),
+            foreground: default_foreground(),
+            background: default_background(),
+            highlight_bg: default_highlight_bg(),
+            highlight_fg: default_highlight_fg(),
+            header_1: default_header_1(),
+            header_2: default_header_2(),
+            header_3: default_header_3(),
+            code_bg: default_code_bg(),
+            encrypted_tag: default_encrypted_tag(),
+            notebook_border_active: None,
+            notebook_border_inactive: None,
+            notebook_title_active: None,
+            notebook_title_inactive: None,
+            section_border_active: None,
+            section_border_inactive: None,
+            section_title_active: None,
+            section_title_inactive: None,
+            note_border_active: None,
+            note_border_inactive: None,
+            note_title_active: None,
+            note_title_inactive: None,
+            preview_border_active: None,
+            preview_border_inactive: None,
+            preview_title_active: None,
+            preview_title_inactive: None,
         }
     }
 }
 
 #[derive(Debug, Clone)]
 pub struct Theme {
-    pub primary: Color,
-    pub secondary: Color,
-    pub accent: Color,
-    pub background: Color,
+    pub active_border: Color,
+    pub inactive_border: Color,
+    pub sidebar_title: Color,
+    pub active_sidebar_border: Color,
     pub foreground: Color,
-    pub border: Color,
+    pub background: Color,
     pub highlight_bg: Color,
     pub highlight_fg: Color,
     pub header_1: Color,
@@ -54,21 +126,53 @@ pub struct Theme {
     pub code_bg: Color,
     pub encrypted_tag: Color,
     pub transparent: bool,
+
+    // Legacy fields
+    pub primary: Color,
+    pub secondary: Color,
+    pub accent: Color,
+    pub border: Color,
+
+    // Component-specific overrides
+    pub notebook_border_active: Color,
+    pub notebook_border_inactive: Color,
+    pub notebook_title_active: Color,
+    pub notebook_title_inactive: Color,
+
+    pub section_border_active: Color,
+    pub section_border_inactive: Color,
+    pub section_title_active: Color,
+    pub section_title_inactive: Color,
+
+    pub note_border_active: Color,
+    pub note_border_inactive: Color,
+    pub note_title_active: Color,
+    pub note_title_inactive: Color,
+
+    pub preview_border_active: Color,
+    pub preview_border_inactive: Color,
+    pub preview_title_active: Color,
+    pub preview_title_inactive: Color,
 }
 
 impl Theme {
     pub fn from_config(config: &ThemeConfig, transparent: bool) -> Self {
+        let active_border = parse_color(&config.active_border);
+        let inactive_border = parse_color(&config.inactive_border);
+        let sidebar_title = parse_color(&config.sidebar_title);
+        let active_sidebar_border = parse_color(&config.active_sidebar_border);
+
         Self {
-            primary: parse_color(&config.primary),
-            secondary: parse_color(&config.secondary),
-            accent: parse_color(&config.accent),
+            active_border,
+            inactive_border,
+            sidebar_title,
+            active_sidebar_border,
+            foreground: parse_color(&config.foreground),
             background: if transparent {
                 Color::Reset
             } else {
                 parse_color(&config.background)
             },
-            foreground: parse_color(&config.foreground),
-            border: parse_color(&config.border),
             highlight_bg: parse_color(&config.highlight_bg),
             highlight_fg: parse_color(&config.highlight_fg),
             header_1: parse_color(&config.header_1),
@@ -77,6 +181,31 @@ impl Theme {
             code_bg: parse_color(&config.code_bg),
             encrypted_tag: parse_color(&config.encrypted_tag),
             transparent,
+
+            primary: active_border,
+            secondary: sidebar_title,
+            accent: active_sidebar_border,
+            border: inactive_border,
+
+            notebook_border_active: config.notebook_border_active.as_deref().map(parse_color).unwrap_or(active_sidebar_border),
+            notebook_border_inactive: config.notebook_border_inactive.as_deref().map(parse_color).unwrap_or(inactive_border),
+            notebook_title_active: config.notebook_title_active.as_deref().map(parse_color).unwrap_or(sidebar_title),
+            notebook_title_inactive: config.notebook_title_inactive.as_deref().map(parse_color).unwrap_or(sidebar_title),
+
+            section_border_active: config.section_border_active.as_deref().map(parse_color).unwrap_or(active_sidebar_border),
+            section_border_inactive: config.section_border_inactive.as_deref().map(parse_color).unwrap_or(inactive_border),
+            section_title_active: config.section_title_active.as_deref().map(parse_color).unwrap_or(sidebar_title),
+            section_title_inactive: config.section_title_inactive.as_deref().map(parse_color).unwrap_or(sidebar_title),
+
+            note_border_active: config.note_border_active.as_deref().map(parse_color).unwrap_or(active_sidebar_border),
+            note_border_inactive: config.note_border_inactive.as_deref().map(parse_color).unwrap_or(inactive_border),
+            note_title_active: config.note_title_active.as_deref().map(parse_color).unwrap_or(sidebar_title),
+            note_title_inactive: config.note_title_inactive.as_deref().map(parse_color).unwrap_or(sidebar_title),
+
+            preview_border_active: config.preview_border_active.as_deref().map(parse_color).unwrap_or(active_border),
+            preview_border_inactive: config.preview_border_inactive.as_deref().map(parse_color).unwrap_or(inactive_border),
+            preview_title_active: config.preview_title_active.as_deref().map(parse_color).unwrap_or(active_border),
+            preview_title_inactive: config.preview_title_inactive.as_deref().map(parse_color).unwrap_or(sidebar_title),
         }
     }
 
@@ -93,28 +222,23 @@ impl Theme {
     }
 
     pub fn border_style(&self) -> Style {
-        // Inactive border style: #242936 (file_panel_border)
-        self.bg_style().fg(self.border)
+        self.bg_style().fg(self.inactive_border)
     }
 
     pub fn active_main_border_style(&self) -> Style {
-        // Active main panel border style: #FFCC66 (Ayu Gold - file_panel_border_active)
-        self.bg_style().fg(self.primary).add_modifier(Modifier::BOLD)
+        self.bg_style().fg(self.active_border).add_modifier(Modifier::BOLD)
     }
 
     pub fn active_sidebar_border_style(&self) -> Style {
-        // Active sidebar pane border style: #FF7733 (Ayu Coral Orange - sidebar_border_active)
-        self.bg_style().fg(self.accent).add_modifier(Modifier::BOLD)
+        self.bg_style().fg(self.active_sidebar_border).add_modifier(Modifier::BOLD)
     }
 
     pub fn sidebar_title_style(&self) -> Style {
-        // Sidebar title style: #36A3D9 (Ayu Cyan - sidebar_title)
-        self.bg_style().fg(self.secondary).add_modifier(Modifier::BOLD)
+        self.bg_style().fg(self.sidebar_title).add_modifier(Modifier::BOLD)
     }
 
     pub fn main_title_style(&self) -> Style {
-        // Main title style: #FFCC66 (Ayu Gold - file_panel_top_path)
-        self.bg_style().fg(self.primary).add_modifier(Modifier::BOLD)
+        self.bg_style().fg(self.active_border).add_modifier(Modifier::BOLD)
     }
 
     pub fn active_border_style(&self) -> Style {
@@ -128,19 +252,19 @@ impl Theme {
     pub fn active_title_style(&self) -> Style {
         Style::default()
             .fg(Color::Black)
-            .bg(self.primary)
+            .bg(self.active_border)
             .add_modifier(Modifier::BOLD)
     }
 
     pub fn tab_active_style(&self) -> Style {
         Style::default()
-            .bg(self.secondary)
+            .bg(self.sidebar_title)
             .fg(Color::Black)
             .add_modifier(Modifier::BOLD)
     }
 
     pub fn tab_inactive_style(&self) -> Style {
-        self.bg_style().fg(self.border)
+        self.bg_style().fg(self.inactive_border)
     }
 
     pub fn highlight_style(&self) -> Style {
@@ -148,6 +272,47 @@ impl Theme {
             .bg(self.highlight_bg)
             .fg(self.highlight_fg)
             .add_modifier(Modifier::BOLD)
+    }
+
+    // Component-specific getters
+    pub fn notebook_border_style(&self, active: bool) -> Style {
+        let col = if active { self.notebook_border_active } else { self.notebook_border_inactive };
+        self.bg_style().fg(col).add_modifier(if active { Modifier::BOLD } else { Modifier::empty() })
+    }
+
+    pub fn notebook_title_style(&self, active: bool) -> Style {
+        let col = if active { self.notebook_title_active } else { self.notebook_title_inactive };
+        self.bg_style().fg(col).add_modifier(Modifier::BOLD)
+    }
+
+    pub fn section_border_style(&self, active: bool) -> Style {
+        let col = if active { self.section_border_active } else { self.section_border_inactive };
+        self.bg_style().fg(col).add_modifier(if active { Modifier::BOLD } else { Modifier::empty() })
+    }
+
+    pub fn section_title_style_comp(&self, active: bool) -> Style {
+        let col = if active { self.section_title_active } else { self.section_title_inactive };
+        self.bg_style().fg(col).add_modifier(Modifier::BOLD)
+    }
+
+    pub fn note_border_style(&self, active: bool) -> Style {
+        let col = if active { self.note_border_active } else { self.note_border_inactive };
+        self.bg_style().fg(col).add_modifier(if active { Modifier::BOLD } else { Modifier::empty() })
+    }
+
+    pub fn note_title_style(&self, active: bool) -> Style {
+        let col = if active { self.note_title_active } else { self.note_title_inactive };
+        self.bg_style().fg(col).add_modifier(Modifier::BOLD)
+    }
+
+    pub fn preview_border_style(&self, active: bool) -> Style {
+        let col = if active { self.preview_border_active } else { self.preview_border_inactive };
+        self.bg_style().fg(col).add_modifier(if active { Modifier::BOLD } else { Modifier::empty() })
+    }
+
+    pub fn preview_title_style(&self, active: bool) -> Style {
+        let col = if active { self.preview_title_active } else { self.preview_title_inactive };
+        self.bg_style().fg(col).add_modifier(Modifier::BOLD)
     }
 }
 
