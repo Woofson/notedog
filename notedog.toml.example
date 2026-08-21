@@ -1,0 +1,49 @@
+# 🐶 NOTEDOG CONFIGURATION EXAMPLE
+# Location: ~/.config/notedog/notedog.toml or ~/.config/notedog/notedog.conf
+
+# Directory where your notebooks, sections, and markdown notes are stored.
+# Hierarchical layout: note_folder / Notebook / Section / Note.md
+note_folder = "~/Notes"
+
+# Default text editor for editing notes.
+# Options: "builtin" (built-in TUI editor), "nvim", "vim", "nano", "micro", "helix"
+editor = "builtin"
+
+# Location for optional secrets & encrypted note keys
+secrets_file = "~/.config/notedog/secrets.toml"
+
+# Terminal background transparency.
+# Set true for transparent terminals (uses default terminal background).
+transparent_background = true
+
+# Show bottom status and keybinding bar
+show_help_bar = true
+
+# Default word wrap mode in Note Viewer (true / false)
+word_wrap = true
+
+# Default active notebook on launch
+default_notebook = "Personal"
+
+# 🎨 WARM COLOR PALETTE THEME CONFIGURATION
+[theme]
+# Primary warm accent (borders, tab titles, headers)
+primary = "#FF8C00"       # Dark Orange
+
+# Secondary accent (active items, buttons, section titles)
+secondary = "#F39C12"     # Amber / Gold
+
+# Highlight accent (current selection, key shortcuts)
+accent = "#FFD700"        # Gold
+
+# Default text color
+foreground = "#FDFEFE"    # Warm Off-White
+
+# Background color (active if transparent_background = false)
+background = "#1C1B1A"    # Deep Charcoal
+
+# Inactive border color
+border = "#504A45"        # Warm Charcoal
+
+# Color indicator for encrypted notes
+encrypted_tag = "#E74C3C" # Coral Red

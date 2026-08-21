@@ -1,0 +1,165 @@
+use crate::note_manager::NoteManager;
+use crate::theme::Theme;
+use ratatui::{
+    layout::{Constraint, Direction, Layout, Rect},
+    style::{Modifier, Style},
+    text::{Line, Span},
+    widgets::{Block, BorderType, Borders, List, ListItem, Tabs},
+    Frame,
+};
+
+pub fn render_notebook_tabs(
+    f: &mut Frame,
+    area: Rect,
+    manager: &NoteManager,
+    active_notebook_idx: usize,
+    is_focused: bool,
+    theme: &Theme,
+) {
+    let titles: Vec<Line> = manager
+        .notebooks
+        .iter()
+        .enumerate()
+        .map(|(i, nb)| {
+            let prefix = if i == active_notebook_idx { "📁 " } else { "📁 " };
+            Line::from(format!("{}{}", prefix, nb.name))
+        })
+        .collect();
+
+    let title_str = if is_focused { " ▶ 📚 NOTEBOOKS ◀ " } else { " 📚 NOTEBOOKS " };
+
+    let tabs = Tabs::new(titles)
+        .block(
+            Block::default()
+                .borders(Borders::BOTTOM)
+                .border_style(if is_focused {
+                    theme.active_border_style()
+                } else {
+                    theme.border_style()
+                })
+                .title(if is_focused {
+                    Span::styled(title_str, theme.active_title_style())
+                } else {
+                    Span::styled(title_str, theme.title_style())
+                }),
+        )
+        .select(active_notebook_idx)
+        .style(theme.tab_inactive_style())
+        .highlight_style(theme.tab_active_style());
+
+    f.render_widget(tabs, area);
+}
+
+pub fn render_navigation_sidebar(
+    f: &mut Frame,
+    area: Rect,
+    manager: &NoteManager,
+    active_nb: usize,
+    active_sec: usize,
+    active_note: usize,
+    focused_pane: &str, // "sections", "notes"
+    theme: &Theme,
+) {
+    let chunks = Layout::default()
+        .direction(Direction::Vertical)
+        .constraints([Constraint::Percentage(45), Constraint::Percentage(55)])
+        .split(area);
+
+    let current_nb = manager.notebooks.get(active_nb);
+
+    // 1. Sections List
+    let sec_items: Vec<ListItem> = if let Some(nb) = current_nb {
+        nb.sections
+            .iter()
+            .enumerate()
+            .map(|(i, sec)| {
+                let is_selected = i == active_sec;
+                let icon = if is_selected { "📂 " } else { "📁 " };
+                let style = if is_selected {
+                    theme.highlight_style()
+                } else {
+                    theme.fg_style()
+                };
+                ListItem::new(Line::from(vec![
+                    Span::styled(icon, Style::default().fg(theme.primary)),
+                    Span::styled(sec.name.clone(), style),
+                ]))
+            })
+            .collect()
+    } else {
+        vec![ListItem::new(" (No sections)")]
+    };
+
+    let is_sec_focused = focused_pane == "sections";
+    let sec_block = Block::default()
+        .borders(Borders::ALL)
+        .border_type(if is_sec_focused {
+            BorderType::Double
+        } else {
+            BorderType::Plain
+        })
+        .border_style(if is_sec_focused {
+            theme.active_border_style()
+        } else {
+            theme.border_style()
+        })
+        .title(if is_sec_focused {
+            Span::styled(" ▶ 📂 SECTIONS ◀ ", theme.active_title_style())
+        } else {
+            Span::styled(" 📂 SECTIONS ", theme.title_style())
+        });
+
+    let sec_list = List::new(sec_items).block(sec_block);
+    f.render_widget(sec_list, chunks[0]);
+
+    // 2. Notes List
+    let current_sec = current_nb.and_then(|nb| nb.sections.get(active_sec));
+    let note_items: Vec<ListItem> = if let Some(sec) = current_sec {
+        sec.notes
+            .iter()
+            .enumerate()
+            .map(|(i, note)| {
+                let is_selected = i == active_note;
+                let icon = if note.is_encrypted { "🔒 " } else { "📄 " };
+                let name_style = if is_selected {
+                    theme.highlight_style()
+                } else if note.is_encrypted {
+                    Style::default().fg(theme.encrypted_tag).add_modifier(Modifier::BOLD)
+                } else {
+                    theme.fg_style()
+                };
+
+                let lock_badge = if note.is_encrypted { " [ENC]" } else { "" };
+                ListItem::new(Line::from(vec![
+                    Span::styled(icon, Style::default().fg(if note.is_encrypted { theme.encrypted_tag } else { theme.accent })),
+                    Span::styled(note.name.clone(), name_style),
+                    Span::styled(lock_badge, Style::default().fg(theme.encrypted_tag)),
+                ]))
+            })
+            .collect()
+    } else {
+        vec![ListItem::new(" (No notes)")]
+    };
+
+    let is_note_focused = focused_pane == "notes";
+    let note_block = Block::default()
+        .borders(Borders::ALL)
+        .border_type(if is_note_focused {
+            BorderType::Double
+        } else {
+            BorderType::Plain
+        })
+        .border_style(if is_note_focused {
+            theme.active_border_style()
+        } else {
+            theme.border_style()
+        })
+        .title(if is_note_focused {
+            Span::styled(" ▶ 📄 NOTES ◀ ", theme.active_title_style())
+        } else {
+            Span::styled(" 📄 NOTES ", theme.title_style())
+        });
+
+    let note_list = List::new(note_items).block(note_block);
+    f.render_widget(note_list, chunks[1]);
+}

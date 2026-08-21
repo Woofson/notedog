@@ -1,0 +1,42 @@
+# 🎨 NOTEDOG THEME PRESETS EXAMPLE
+# Copy or reference custom color schemes in ~/.config/notedog/themes/ or ~/.config/notedog/notedog.toml
+
+[theme.warm_orange]
+# Default Warm Orange / Gold Palette
+primary = "#FF8C00"
+secondary = "#F39C12"
+accent = "#FFD700"
+foreground = "#FDFEFE"
+background = "#1C1B1A"
+border = "#504A45"
+encrypted_tag = "#E74C3C"
+
+[theme.amber_gold]
+# Rich Amber Gold & Caramel
+primary = "#D4AC0D"
+secondary = "#F4D03F"
+accent = "#F1C40F"
+foreground = "#FEF9E7"
+background = "#18150C"
+border = "#5B4F23"
+encrypted_tag = "#C0392B"
+
+[theme.obsidian_dark]
+# Obsidian Minimalist Dark
+primary = "#7A88CF"
+secondary = "#9FADF6"
+accent = "#C5D0FF"
+foreground = "#E1E1E6"
+background = "#16161A"
+border = "#242629"
+encrypted_tag = "#FF5555"
+
+[theme.solarized_warm]
+# Solarized Warm Terracotta
+primary = "#CB4B16"
+secondary = "#B58900"
+accent = "#2AA198"
+foreground = "#FDF6E3"
+background = "#073642"
+border = "#586E75"
+encrypted_tag = "#DC322F"
