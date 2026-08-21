@@ -21,7 +21,10 @@
   - Human-understandable color naming (`active_border`, `inactive_border`, `sidebar_title`, `active_sidebar_border`, `foreground`, `background`).
 - **📚 Superfile-Style 3-Tier Navigation**: Organize notes into `Notebook` > `Section` (Subject/Project) > `Note.md` with glowing rounded borders (`BorderType::Rounded`) and bottom status badges. Full vertical navigation (`↑`/`↓` and `k`/`j`) for all 3 list boxes.
 - **📐 Resizable Layout Dimensions**: Set custom sidebar width and box heights as percentages (`"26%"`, `"34%"`) or fixed terminal rows/columns (`"30"`, `"12"`) in `notedog.toml`.
-- **🎨 Regex-Based Custom Icons & Built-in Rules**: Built-in preset rules for Todo (`✅ `), Shopping (`🛒 `), Ideas (`💡 `), Work (`💼 `), Personal (`📔 `), Finance (`💰 `), Secrets (`🔒 `), Meetings (`📅 `), and Welcome (`👋 `). Fully customizable in `notedog.toml`.
+- **🎨 Custom Icons, Nerd Fonts & Regex Rules**:
+  - Full support for both color Emojis (`📚`, `📂`, `📄`) and **Nerd Fonts vector glyphs** (`󰉋 `, ` `, `󰈙 `, `󰌾 `).
+  - Built-in preset rules for Todo (`󰱒 `), Shopping (`󰄗 `), Ideas (`󰌵 `), Work (`󰲂 `), Finance (`󰄴 `), Meetings (`󰃭 `), and Secrets (`󰌾 `).
+  - Includes a dedicated [Nerd Fonts copy-paste cheat sheet](file:///home/bolt/projects/arfnotes/nerd.md) (`nerd.md`).
 - **🎨 Universal Markdown Color Support**:
   - Uses standard HTML spans (`<span style="color:#FF8C00">text</span>`) and font tags (`<font color="gold">text</font>`).
   - Render colors inside the TUI **and** stay fully readable by Obsidian, VS Code, and GitHub Markdown previews.

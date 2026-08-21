@@ -41,13 +41,24 @@ sections_height = "34%"    # e.g. "34%" or "10" fixed rows
 notes_height = "40%"       # e.g. "40%" or "12" fixed rows
 
 # 🎨 CUSTOMIZABLE SECTION ICONS & PRESET REGEX MATCHING RULES
+# Note: Color Emojis (📚 📂 📄 🔒) use your terminal's fixed font color artwork.
+# For full custom icon coloring via `notebook_icon_fg`, use Nerd Fonts symbols below!
 [icons]
+# Standard Color Emojis:
 notebook = "📚 "
 section = "📂 "
 note = "📄 "
 encrypted_note = "🔒 "
 preview = "📖 "
 editor = "✏️ "
+
+# Nerd Fonts Alternatives (Supports full custom RGB / Hex coloring!):
+# notebook = "󰉋 "
+# section = " "
+# note = "󰈙 "
+# encrypted_note = "󰌾 "
+# preview = "📖 "
+# editor = "✏️ "
 
 # 📋 TODO & TASKLIST PRESETS
 [[icons.rules]]
@@ -95,11 +106,6 @@ pattern = "(?i).*(welcome|intro|getting-started|readme).*"
 icon = "👋 "
 
 # 📝 CUSTOM NOTE TEMPLATE RULES (OPTIONAL)
-# Automatically populates newly created notes based on title pattern matching!
-# Replaces {{title}} with note title and {{date}} with timestamp.
-# Built-in presets automatically handle Todo (tickboxes), Shopping (category tickboxes),
-# Meetings (agenda & action items), Ideas, Work Projects, and Finance.
-
 [[templates]]
 pattern = "(?i).*(sprint|retro).*"
 template = """# 🚀 {{title}}
@@ -129,7 +135,7 @@ highlight_fg = "#36A3D9"         # Default selected item text color (Ayu Cyan)
 encrypted_tag = "#F07178"        # Encrypted note tag & lock badge color (Coral Red)
 
 # 🖌️ MAXIMUM CUSTOMIZABILITY: PER-ITEM BACKGROUND, TEXT, ICON & WEIGHT OVERRIDES
-# Set custom background, text colors, icon colors, and font weights for each pane individually!
+# Icon colors (`notebook_icon_fg`, etc.) work on Nerd Fonts and monochromatic glyphs!
 
 # -- Notebook Items
 # notebook_item_bg = "none"
@@ -138,8 +144,8 @@ encrypted_tag = "#F07178"        # Encrypted note tag & lock badge color (Coral 
 # notebook_item_selected_bg = "#1F2430"
 # notebook_item_selected_fg = "#36A3D9"
 # notebook_item_selected_weight = "bold"
-# notebook_icon_fg = "#36A3D9"
-# notebook_icon_selected_fg = "#36A3D9"
+# notebook_icon_fg = "#FFCC66"
+# notebook_icon_selected_fg = "#FF7733"
 
 # -- Section Items
 # section_item_bg = "none"
@@ -149,7 +155,7 @@ encrypted_tag = "#F07178"        # Encrypted note tag & lock badge color (Coral 
 # section_item_selected_fg = "#36A3D9"
 # section_item_selected_weight = "bold"
 # section_icon_fg = "#36A3D9"
-# section_icon_selected_fg = "#36A3D9"
+# section_icon_selected_fg = "#FFCC66"
 
 # -- Note Items
 # note_item_bg = "none"
@@ -158,5 +164,5 @@ encrypted_tag = "#F07178"        # Encrypted note tag & lock badge color (Coral 
 # note_item_selected_bg = "#1F2430"
 # note_item_selected_fg = "#36A3D9"
 # note_item_selected_weight = "bold"
-# note_icon_fg = "#36A3D9"
+# note_icon_fg = "#F07178"
 # note_icon_selected_fg = "#36A3D9"
