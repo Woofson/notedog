@@ -3,6 +3,12 @@ use serde::{Deserialize, Serialize};
 use std::fs;
 use std::path::PathBuf;
 
+fn default_note_prefix() -> String { "Note ".to_string() }
+fn default_note_postfix() -> String { "".to_string() }
+fn default_section_prefix() -> String { "Section ".to_string() }
+fn default_section_postfix() -> String { "".to_string() }
+fn default_date_format() -> String { "%Y-%m-%d %H:%M".to_string() }
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Config {
     pub note_folder: String,
@@ -12,6 +18,18 @@ pub struct Config {
     pub show_help_bar: bool,
     pub word_wrap: bool,
     pub default_notebook: String,
+
+    #[serde(default = "default_note_prefix")]
+    pub default_note_prefix: String,
+    #[serde(default = "default_note_postfix")]
+    pub default_note_postfix: String,
+    #[serde(default = "default_section_prefix")]
+    pub default_section_prefix: String,
+    #[serde(default = "default_section_postfix")]
+    pub default_section_postfix: String,
+    #[serde(default = "default_date_format")]
+    pub date_format: String,
+
     #[serde(default)]
     pub theme: ThemeConfig,
 }
@@ -35,12 +53,37 @@ impl Default for Config {
             show_help_bar: true,
             word_wrap: true,
             default_notebook: "Personal".to_string(),
+            default_note_prefix: default_note_prefix(),
+            default_note_postfix: default_note_postfix(),
+            default_section_prefix: default_section_prefix(),
+            default_section_postfix: default_section_postfix(),
+            date_format: default_date_format(),
             theme: ThemeConfig::default(),
         }
     }
 }
 
 impl Config {
+    pub fn format_default_note_title(&self) -> String {
+        let ts = crate::versioning::format_timestamp(
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap_or_default()
+                .as_secs(),
+        );
+        format!("{}{}{}", self.default_note_prefix, ts, self.default_note_postfix)
+    }
+
+    pub fn format_default_section_title(&self) -> String {
+        let ts = crate::versioning::format_timestamp(
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap_or_default()
+                .as_secs(),
+        );
+        format!("{}{}{}", self.default_section_prefix, ts, self.default_section_postfix)
+    }
+
     pub fn config_dir() -> PathBuf {
         dirs::config_dir()
             .unwrap_or_else(|| PathBuf::from("~/.config"))

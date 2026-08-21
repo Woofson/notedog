@@ -25,6 +25,14 @@ word_wrap = true
 # Default active notebook on launch
 default_notebook = "Personal"
 
+# 📝 DEFAULT TITLE TEMPLATES & DATE FORMATTING
+# Used when creating new Notes (Ctrl+N) or Sections (Ctrl+K) with blank input
+default_note_prefix = "Note "
+default_note_postfix = ""
+default_section_prefix = "Section "
+default_section_postfix = ""
+date_format = "%Y-%m-%d %H:%M"
+
 # 🎨 WARM COLOR PALETTE THEME CONFIGURATION
 [theme]
 # Primary warm accent (borders, tab titles, headers)

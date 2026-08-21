@@ -230,6 +230,65 @@ impl NoteManager {
         Ok(())
     }
 
+    pub fn rename_notebook(&mut self, nb_idx: usize, new_name: &str) -> io::Result<()> {
+        if let Some(nb) = self.notebooks.get(nb_idx) {
+            let sanitized = new_name.trim().replace('/', "_");
+            if sanitized.is_empty() {
+                return Ok(());
+            }
+            if let Some(parent) = nb.path.parent() {
+                let target = parent.join(&sanitized);
+                if target != nb.path {
+                    fs::rename(&nb.path, &target)?;
+                    self.reload();
+                }
+            }
+        }
+        Ok(())
+    }
+
+    pub fn rename_section(&mut self, nb_idx: usize, sec_idx: usize, new_name: &str) -> io::Result<()> {
+        if let Some(nb) = self.notebooks.get(nb_idx) {
+            if let Some(sec) = nb.sections.get(sec_idx) {
+                let sanitized = new_name.trim().replace('/', "_");
+                if sanitized.is_empty() {
+                    return Ok(());
+                }
+                if let Some(parent) = sec.path.parent() {
+                    let target = parent.join(&sanitized);
+                    if target != sec.path {
+                        fs::rename(&sec.path, &target)?;
+                        self.reload();
+                    }
+                }
+            }
+        }
+        Ok(())
+    }
+
+    pub fn rename_note(&mut self, nb_idx: usize, sec_idx: usize, note_idx: usize, new_name: &str) -> io::Result<()> {
+        if let Some(nb) = self.notebooks.get(nb_idx) {
+            if let Some(sec) = nb.sections.get(sec_idx) {
+                if let Some(note) = sec.notes.get(note_idx) {
+                    let sanitized = new_name.trim().replace('/', "_");
+                    if sanitized.is_empty() {
+                        return Ok(());
+                    }
+                    let ext = if note.is_encrypted { "md.enc" } else { "md" };
+                    let target_filename = format!("{}.{}", sanitized, ext);
+                    if let Some(parent) = note.path.parent() {
+                        let target_path = parent.join(target_filename);
+                        if target_path != note.path {
+                            fs::rename(&note.path, &target_path)?;
+                            self.reload();
+                        }
+                    }
+                }
+            }
+        }
+        Ok(())
+    }
+
     fn ensure_starter_notes(&self) {
         if self.root_dir.exists() {
             if let Ok(entries) = fs::read_dir(&self.root_dir) {

@@ -34,6 +34,7 @@ pub fn render_help_modal(f: &mut Frame, area: Rect, scroll_y: usize, theme: &The
         Line::from(vec![Span::raw("  Ctrl+N            Contextual Create (New Note/Section/Notebook depending on focused pane)")]),
         Line::from(vec![Span::raw("  Ctrl+B            Create New Notebook")]),
         Line::from(vec![Span::raw("  Ctrl+K            Create New Section")]),
+        Line::from(vec![Span::raw("  r / Ctrl+R        Contextual Rename (Rename focused Notebook, Section, or Note)")]),
         Line::from(vec![Span::raw("  Ctrl+D / d        Contextual Delete (Delete focused Notebook, Section, or Note with confirmation)")]),
         Line::from(""),
         Line::from(vec![Span::styled("EDITING & PREVIEW", Style::default().fg(theme.accent).add_modifier(Modifier::BOLD))]),

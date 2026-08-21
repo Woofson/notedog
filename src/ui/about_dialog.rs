@@ -35,7 +35,7 @@ pub fn render_about_modal(f: &mut Frame, area: Rect, theme: &Theme) {
     let banner = vec![
         Line::from(vec![
             Span::styled("   🐶 NOTEDOG ", Style::default().fg(theme.accent).add_modifier(Modifier::BOLD)),
-            Span::styled("v0.1.0", Style::default().fg(theme.secondary)),
+            Span::styled("v0.2.0", Style::default().fg(theme.secondary)),
         ]),
         Line::from(Span::styled("   A warm-themed, blazing-fast TUI note application inspired by OneNote & Obsidian", Style::default().fg(theme.foreground))),
         Line::from(""),

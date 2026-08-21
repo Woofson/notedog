@@ -50,9 +50,10 @@
 | `Ctrl+S` | Save current note (in built-in editor) |
 | `Ctrl+C` | Insert HTML Color tag (`<span style="color:#FF8C00">`) |
 | `Ctrl+M` | Insert Mermaid flowchart template |
-| `Ctrl+N` | **Contextual Create**: Create Notebook, Section, or Note depending on focused pane |
+| `Ctrl+N` | **Contextual Create**: Create Notebook, Section, or Note depending on focused pane (uses configurable default title template if empty) |
 | `Ctrl+B` | Create a new **Notebook** |
 | `Ctrl+K` | Create a new **Section** |
+| `r` / `Ctrl+R` | **Contextual Rename**: Rename focused Notebook, Section, or Note on disk |
 | `Ctrl+D` / `d` | **Contextual Delete**: Safely delete focused Notebook, Section, or Note with confirmation dialog |
 | `v` / `Ctrl+V` | **Revision History Modal**: Browse endless file version snapshots, view live line diffs (`+`/`-`), restore past revisions, or open cleanup presets |
 | `Ctrl+E` | Encrypt or Decrypt current note (prompts for passphrase) |

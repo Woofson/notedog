@@ -75,9 +75,10 @@ pub fn render_input_dialog(
     dialog_title: &str,
     input_label: &str,
     input_buffer: &str,
+    placeholder: Option<&str>,
     theme: &Theme,
 ) {
-    let popup_area = centered_rect(55, 22, area);
+    let popup_area = centered_rect(60, 24, area);
 
     f.render_widget(Clear, popup_area);
 
@@ -107,12 +108,24 @@ pub fn render_input_dialog(
         .borders(Borders::ALL)
         .border_style(Style::default().fg(theme.secondary));
 
-    let input_para = Paragraph::new(format!("{}█", input_buffer)).block(input_block);
+    let input_para = if input_buffer.is_empty() {
+        if let Some(ph) = placeholder {
+            Paragraph::new(Line::from(vec![
+                Span::styled(ph, Style::default().fg(Color::DarkGray).add_modifier(Modifier::ITALIC)),
+                Span::styled("  (Press Enter for default)", Style::default().fg(theme.secondary)),
+            ])).block(input_block)
+        } else {
+            Paragraph::new("█").block(input_block)
+        }
+    } else {
+        Paragraph::new(format!("{}█", input_buffer)).block(input_block)
+    };
+
     f.render_widget(input_para, inner_chunks[1]);
 
     let footer = Paragraph::new(Line::from(vec![
         Span::styled(" [Enter] ", Style::default().fg(theme.primary).add_modifier(Modifier::BOLD)),
-        Span::styled("Create   ", theme.fg_style()),
+        Span::styled("Confirm   ", theme.fg_style()),
         Span::styled(" [Esc] ", Style::default().fg(theme.border).add_modifier(Modifier::BOLD)),
         Span::styled("Cancel", theme.fg_style()),
     ]));

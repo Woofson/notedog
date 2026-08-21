@@ -34,6 +34,9 @@ pub enum InputMode {
     CreateNotebook,
     CreateSection,
     CreateNote,
+    RenameNotebook,
+    RenameSection,
+    RenameNote,
     ConfirmDelete {
         title: String,
         item_type: String,
@@ -212,6 +215,9 @@ impl App {
             InputMode::CreateNotebook => self.handle_input_dialog(key, "notebook"),
             InputMode::CreateSection => self.handle_input_dialog(key, "section"),
             InputMode::CreateNote => self.handle_input_dialog(key, "note"),
+            InputMode::RenameNotebook => self.handle_input_dialog(key, "rename_notebook"),
+            InputMode::RenameSection => self.handle_input_dialog(key, "rename_section"),
+            InputMode::RenameNote => self.handle_input_dialog(key, "rename_note"),
             InputMode::ConfirmDelete { title, item_type } => {
                 let t = title.clone();
                 let it = item_type.clone();
@@ -278,6 +284,37 @@ impl App {
                             title: note.name.clone(),
                             item_type: "note".to_string(),
                         };
+                    }
+                    return false;
+                }
+            }
+        }
+
+        // Contextual Rename (r in preview or Ctrl+R)
+        if (key.modifiers.contains(KeyModifiers::CONTROL) && key.code == KeyCode::Char('r'))
+            || (self.view_mode == ViewMode::Preview && key.code == KeyCode::Char('r'))
+        {
+            match self.focused_pane {
+                Pane::Notebooks => {
+                    if let Some(nb) = self.manager.notebooks.get(self.active_notebook_idx) {
+                        self.input_buffer = nb.name.clone();
+                        self.input_mode = InputMode::RenameNotebook;
+                    }
+                    return false;
+                }
+                Pane::Sections => {
+                    if let Some(nb) = self.manager.notebooks.get(self.active_notebook_idx) {
+                        if let Some(sec) = nb.sections.get(self.active_section_idx) {
+                            self.input_buffer = sec.name.clone();
+                            self.input_mode = InputMode::RenameSection;
+                        }
+                    }
+                    return false;
+                }
+                Pane::Notes | Pane::MainView => {
+                    if let Some(note) = self.current_note_file() {
+                        self.input_buffer = note.name.clone();
+                        self.input_mode = InputMode::RenameNote;
                     }
                     return false;
                 }
@@ -548,9 +585,17 @@ impl App {
                 self.input_mode = InputMode::Normal;
             }
             KeyCode::Enter => {
-                let name = self.input_buffer.trim().to_string();
+                let mut name = self.input_buffer.trim().to_string();
                 self.input_buffer.clear();
                 self.input_mode = InputMode::Normal;
+
+                if name.is_empty() {
+                    if item_type == "note" {
+                        name = self.config.format_default_note_title();
+                    } else if item_type == "section" {
+                        name = self.config.format_default_section_title();
+                    }
+                }
 
                 if !name.is_empty() {
                     match item_type {
@@ -574,6 +619,21 @@ impl App {
                             ) {
                                 self.load_current_note();
                             }
+                        }
+                        "rename_notebook" => {
+                            let _ = self.manager.rename_notebook(self.active_notebook_idx, &name);
+                            self.load_current_note();
+                            self.status_message = format!("Renamed notebook to '{}'", name);
+                        }
+                        "rename_section" => {
+                            let _ = self.manager.rename_section(self.active_notebook_idx, self.active_section_idx, &name);
+                            self.load_current_note();
+                            self.status_message = format!("Renamed section to '{}'", name);
+                        }
+                        "rename_note" => {
+                            let _ = self.manager.rename_note(self.active_notebook_idx, self.active_section_idx, self.active_note_idx, &name);
+                            self.load_current_note();
+                            self.status_message = format!("Renamed note to '{}'", name);
                         }
                         _ => {}
                     }

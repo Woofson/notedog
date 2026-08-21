@@ -163,26 +163,64 @@ pub fn render_ui(f: &mut Frame, app: &mut App) {
                 "New Notebook",
                 "Enter Notebook Name:",
                 &app.input_buffer,
+                None,
                 &app.theme,
             );
         }
         InputMode::CreateSection => {
+            let default_title = app.config.format_default_section_title();
             crypto_dialog::render_input_dialog(
                 f,
                 size,
                 "New Section",
                 "Enter Section Name:",
                 &app.input_buffer,
+                Some(&default_title),
                 &app.theme,
             );
         }
         InputMode::CreateNote => {
+            let default_title = app.config.format_default_note_title();
             crypto_dialog::render_input_dialog(
                 f,
                 size,
                 "New Note",
                 "Enter Note Title:",
                 &app.input_buffer,
+                Some(&default_title),
+                &app.theme,
+            );
+        }
+        InputMode::RenameNotebook => {
+            crypto_dialog::render_input_dialog(
+                f,
+                size,
+                "Rename Notebook",
+                "Enter New Notebook Name:",
+                &app.input_buffer,
+                None,
+                &app.theme,
+            );
+        }
+        InputMode::RenameSection => {
+            crypto_dialog::render_input_dialog(
+                f,
+                size,
+                "Rename Section",
+                "Enter New Section Name:",
+                &app.input_buffer,
+                None,
+                &app.theme,
+            );
+        }
+        InputMode::RenameNote => {
+            crypto_dialog::render_input_dialog(
+                f,
+                size,
+                "Rename Note",
+                "Enter New Note Title:",
+                &app.input_buffer,
+                None,
                 &app.theme,
             );
         }
