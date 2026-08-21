@@ -80,7 +80,7 @@ pub fn render_navigation_sidebar(
             let is_selected = i == active_nb;
             let icon = icons.get_icon_for(&nb.name, &icons.notebook);
             let style = theme.notebook_item_style(is_selected);
-            let icon_style = Style::default().fg(if is_selected { theme.highlight_fg } else { theme.sidebar_title });
+            let icon_style = theme.notebook_icon_style(is_selected);
             ListItem::new(Line::from(vec![
                 Span::styled(format!("{} ", icon), icon_style),
                 Span::styled(nb.name.clone(), style),
@@ -109,7 +109,7 @@ pub fn render_navigation_sidebar(
                 let is_selected = i == active_sec;
                 let icon = icons.get_icon_for(&sec.name, &icons.section);
                 let style = theme.section_item_style(is_selected);
-                let icon_style = Style::default().fg(if is_selected { theme.highlight_fg } else { theme.sidebar_title });
+                let icon_style = theme.section_icon_style(is_selected);
                 ListItem::new(Line::from(vec![
                     Span::styled(format!("{} ", icon), icon_style),
                     Span::styled(sec.name.clone(), style),
@@ -147,7 +147,11 @@ pub fn render_navigation_sidebar(
                 };
 
                 let lock_badge = if note.is_encrypted { " [ENC]" } else { "" };
-                let icon_style = Style::default().fg(if note.is_encrypted { theme.encrypted_tag } else if is_selected { theme.highlight_fg } else { theme.sidebar_title });
+                let icon_style = if note.is_encrypted {
+                    Style::default().fg(theme.encrypted_tag)
+                } else {
+                    theme.note_icon_style(is_selected)
+                };
                 ListItem::new(Line::from(vec![
                     Span::styled(format!("{} ", icon), icon_style),
                     Span::styled(note.name.clone(), name_style),
