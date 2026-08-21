@@ -5,8 +5,8 @@ use crate::note_manager::{NoteFile, NoteManager};
 use crate::theme::Theme;
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 use std::env;
-use std::io;
-use std::process::Command;
+use std::io::{self, Write};
+use std::process::{Command, Stdio};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Pane {
@@ -80,6 +80,7 @@ pub struct App {
     pub is_fullscreen: bool,
     pub word_wrap: bool,
     pub show_help: bool,
+    pub needs_clear: bool,
     pub status_message: String,
     pub current_note_content: String,
     pub cached_passphrase: Option<String>,
@@ -115,6 +116,7 @@ impl App {
             diff_scroll_y: 0,
             is_fullscreen: false,
             show_help: false,
+            needs_clear: false,
             status_message: "Ready".to_string(),
             current_note_content: String::new(),
             cached_passphrase: None,
@@ -888,15 +890,52 @@ impl App {
             env::var("EDITOR").unwrap_or_else(|_| "nvim".to_string())
         };
 
-        // Temporarily leave terminal raw mode & launch editor process
+        let mut stdout = io::stdout();
+
+        // 1. Temporarily leave terminal raw mode, alternate screen, and restore cursor
         let _ = crossterm::terminal::disable_raw_mode();
-        let _ = crossterm::execute!(io::stdout(), crossterm::terminal::LeaveAlternateScreen);
+        let _ = crossterm::execute!(
+            stdout,
+            crossterm::terminal::LeaveAlternateScreen,
+            crossterm::cursor::Show
+        );
+        let _ = stdout.flush();
 
-        let _ = Command::new(&editor_cmd).arg(&note_path).status();
+        // 2. Determine shell ($SHELL or /bin/sh) and format safe command
+        let shell = env::var("SHELL").unwrap_or_else(|_| "/bin/sh".to_string());
+        let path_str = note_path.to_string_lossy();
+        let safe_path = path_str.replace('\'', "'\\''");
+        let full_cmd = format!("{} '{}'", editor_cmd, safe_path);
 
+        // Spawn editor process with explicit TTY Stdio inheritance across fish/bash/zsh
+        let status_res = Command::new(&shell)
+            .arg("-c")
+            .arg(&full_cmd)
+            .stdin(Stdio::inherit())
+            .stdout(Stdio::inherit())
+            .stderr(Stdio::inherit())
+            .status();
+
+        // Fallback: If shell invocation fails, attempt direct Command::new
+        if status_res.is_err() {
+            let _ = Command::new(&editor_cmd)
+                .arg(&note_path)
+                .stdin(Stdio::inherit())
+                .stdout(Stdio::inherit())
+                .stderr(Stdio::inherit())
+                .status();
+        }
+
+        // 3. Restore raw mode, alternate screen, and hide cursor
         let _ = crossterm::terminal::enable_raw_mode();
-        let _ = crossterm::execute!(io::stdout(), crossterm::terminal::EnterAlternateScreen);
+        let _ = crossterm::execute!(
+            stdout,
+            crossterm::terminal::EnterAlternateScreen,
+            crossterm::cursor::Hide
+        );
+        let _ = stdout.flush();
 
+        self.needs_clear = true;
         self.load_current_note();
     }
 }

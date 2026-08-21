@@ -98,6 +98,11 @@ fn run_app<B: ratatui::backend::Backend>(
     app: &mut App,
 ) -> io::Result<()> {
     loop {
+        if app.needs_clear {
+            terminal.clear()?;
+            app.needs_clear = false;
+        }
+
         terminal.draw(|f| ui::render_ui(f, app))?;
 
         if event::poll(Duration::from_millis(50))? {
