@@ -40,7 +40,7 @@ notebooks_height = "26%"   # e.g. "26%" or "8" fixed rows
 sections_height = "34%"    # e.g. "34%" or "10" fixed rows
 notes_height = "40%"       # e.g. "40%" or "12" fixed rows
 
-# 🎨 CUSTOMIZABLE SECTION ICONS & REGEX MATCHING RULES
+# 🎨 CUSTOMIZABLE SECTION ICONS & PRESET REGEX MATCHING RULES
 [icons]
 notebook = "📚 "
 section = "📂 "
@@ -51,21 +51,51 @@ editor = "✏️ "
 
 # Regex pattern matching rules for custom icons!
 # Tested in order against Notebook, Section, and Note names:
-[[icons.rules]]
-pattern = ".*Welcome.*"
-icon = "👋 "
 
+# 📋 TODO & TASKLIST PRESETS
 [[icons.rules]]
-pattern = "^Work.*"
+pattern = "(?i).*(todo|tasks|tasklist|checklist|to-do).*"
+icon = "✅ "
+
+# 🛒 SHOPPING & GROCERY LIST PRESETS
+[[icons.rules]]
+pattern = "(?i).*(shopping|grocery|groceries|store|buy|buy-list).*"
+icon = "🛒 "
+
+# 💡 IDEAS & BRAINSTORMING
+[[icons.rules]]
+pattern = "(?i).*(idea|ideas|brainstorm|concept).*"
+icon = "💡 "
+
+# 💼 WORK & PROJECTS
+[[icons.rules]]
+pattern = "(?i).*(work|job|office|project|sprint).*"
 icon = "💼 "
 
+# 📔 PERSONAL & JOURNAL
 [[icons.rules]]
-pattern = ".*(General|Overview).*"
-icon = "📌 "
+pattern = "(?i).*(personal|journal|diary|daily).*"
+icon = "📔 "
 
+# 💰 FINANCE & BUDGET
 [[icons.rules]]
-pattern = "^Note_01_.*"
-icon = "🚀 "
+pattern = "(?i).*(finance|budget|money|expense|expenses|bank).*"
+icon = "💰 "
+
+# 🔒 SECRETS & VAULT
+[[icons.rules]]
+pattern = "(?i).*(secret|secrets|passwords|vault|private).*"
+icon = "🔒 "
+
+# 📅 MEETINGS & CALLS
+[[icons.rules]]
+pattern = "(?i).*(meeting|meetings|call|agenda|standup).*"
+icon = "📅 "
+
+# 👋 WELCOME & INTRO
+[[icons.rules]]
+pattern = "(?i).*(welcome|intro|getting-started|readme).*"
+icon = "👋 "
 
 # 🎨 HUMAN-UNDERSTANDABLE THEME CONFIGURATION
 [theme]
@@ -80,17 +110,19 @@ highlight_fg = "#36A3D9"         # Selected list item text color (Ayu Cyan)
 encrypted_tag = "#F07178"        # Encrypted note tag & lock badge color (Coral Red)
 
 # 🖌️ INDIVIDUAL ITEM TEXT COLOR & FONT WEIGHT OVERRIDES (OPTIONAL)
-# notebook_item_fg = "#B3B1AD"
-# notebook_item_weight = "normal"
-# notebook_item_selected_fg = "#36A3D9"
-# notebook_item_selected_weight = "bold"
+# Colors: Hex code like "#B3B1AD", "gray", "white", "#36A3D9", etc.
+# Weights: "normal", "bold", "dim", "italic", "underlined", "crossed_out"
+notebook_item_fg = "#B3B1AD"
+notebook_item_weight = "normal"
+notebook_item_selected_fg = "#36A3D9"
+notebook_item_selected_weight = "bold"
 
-# section_item_fg = "#B3B1AD"
-# section_item_weight = "normal"
-# section_item_selected_fg = "#36A3D9"
-# section_item_selected_weight = "bold"
+section_item_fg = "#B3B1AD"
+section_item_weight = "normal"
+section_item_selected_fg = "#36A3D9"
+section_item_selected_weight = "bold"
 
-# note_item_fg = "#B3B1AD"
-# note_item_weight = "normal"
-# note_item_selected_fg = "#36A3D9"
-# note_item_selected_weight = "bold"
+note_item_fg = "#B3B1AD"
+note_item_weight = "normal"
+note_item_selected_fg = "#36A3D9"
+note_item_selected_weight = "bold"

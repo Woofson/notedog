@@ -80,10 +80,11 @@ pub fn render_navigation_sidebar(
             let is_selected = i == active_nb;
             let icon = icons.get_icon_for(&nb.name, &icons.notebook);
             let style = theme.notebook_item_style(is_selected);
+            let icon_style = Style::default().fg(if is_selected { theme.highlight_fg } else { theme.sidebar_title });
             ListItem::new(Line::from(vec![
-                Span::styled(format!("{} ", icon), Style::default().fg(theme.sidebar_title)),
+                Span::styled(format!("{} ", icon), icon_style),
                 Span::styled(nb.name.clone(), style),
-            ]))
+            ])).style(style)
         })
         .collect();
 
@@ -108,10 +109,11 @@ pub fn render_navigation_sidebar(
                 let is_selected = i == active_sec;
                 let icon = icons.get_icon_for(&sec.name, &icons.section);
                 let style = theme.section_item_style(is_selected);
+                let icon_style = Style::default().fg(if is_selected { theme.highlight_fg } else { theme.sidebar_title });
                 ListItem::new(Line::from(vec![
-                    Span::styled(format!("{} ", icon), Style::default().fg(theme.sidebar_title)),
+                    Span::styled(format!("{} ", icon), icon_style),
                     Span::styled(sec.name.clone(), style),
-                ]))
+                ])).style(style)
             })
             .collect()
     } else {
@@ -145,11 +147,12 @@ pub fn render_navigation_sidebar(
                 };
 
                 let lock_badge = if note.is_encrypted { " [ENC]" } else { "" };
+                let icon_style = Style::default().fg(if note.is_encrypted { theme.encrypted_tag } else if is_selected { theme.highlight_fg } else { theme.sidebar_title });
                 ListItem::new(Line::from(vec![
-                    Span::styled(format!("{} ", icon), Style::default().fg(if note.is_encrypted { theme.encrypted_tag } else { theme.sidebar_title })),
+                    Span::styled(format!("{} ", icon), icon_style),
                     Span::styled(note.name.clone(), name_style),
                     Span::styled(lock_badge, Style::default().fg(theme.encrypted_tag)),
-                ]))
+                ])).style(name_style)
             })
             .collect()
     } else {

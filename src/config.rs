@@ -49,7 +49,7 @@ impl IconConfig {
                 if re.is_match(name) {
                     return rule.icon.clone();
                 }
-            } else if name.contains(&rule.pattern) {
+            } else if name.to_lowercase().contains(&rule.pattern.to_lowercase()) {
                 return rule.icon.clone();
             }
         }
@@ -66,7 +66,17 @@ impl Default for IconConfig {
             encrypted_note: default_encrypted_note_icon(),
             preview: default_preview_icon(),
             editor: default_editor_icon(),
-            rules: Vec::new(),
+            rules: vec![
+                IconRule { pattern: "(?i).*(todo|tasks|tasklist|checklist|to-do).*".to_string(), icon: "✅ ".to_string() },
+                IconRule { pattern: "(?i).*(shopping|grocery|groceries|store|buy|buy-list).*".to_string(), icon: "🛒 ".to_string() },
+                IconRule { pattern: "(?i).*(idea|ideas|brainstorm|concept).*".to_string(), icon: "💡 ".to_string() },
+                IconRule { pattern: "(?i).*(work|job|office|project|sprint).*".to_string(), icon: "💼 ".to_string() },
+                IconRule { pattern: "(?i).*(personal|journal|diary|daily).*".to_string(), icon: "📔 ".to_string() },
+                IconRule { pattern: "(?i).*(finance|budget|money|expense|expenses|bank).*".to_string(), icon: "💰 ".to_string() },
+                IconRule { pattern: "(?i).*(secret|secrets|passwords|vault|private).*".to_string(), icon: "🔒 ".to_string() },
+                IconRule { pattern: "(?i).*(meeting|meetings|call|agenda|standup).*".to_string(), icon: "📅 ".to_string() },
+                IconRule { pattern: "(?i).*(welcome|intro|getting-started|readme).*".to_string(), icon: "👋 ".to_string() },
+            ],
         }
     }
 }

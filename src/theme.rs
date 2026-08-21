@@ -400,13 +400,15 @@ impl Theme {
 pub fn parse_modifier(modifier_str: &str) -> Modifier {
     let mut modifier = Modifier::empty();
     let lower = modifier_str.to_lowercase();
-    for part in lower.split('|').chain(lower.split(',')) {
+    for part in lower.split(|c| c == '|' || c == ',' || c == '+' || c == ' ') {
         match part.trim() {
             "bold" => modifier |= Modifier::BOLD,
             "dim" => modifier |= Modifier::DIM,
             "italic" => modifier |= Modifier::ITALIC,
             "underlined" | "underline" => modifier |= Modifier::UNDERLINED,
             "reversed" | "reverse" => modifier |= Modifier::REVERSED,
+            "crossed_out" | "strikethrough" => modifier |= Modifier::CROSSED_OUT,
+            "normal" | "regular" | "none" => {}
             _ => {}
         }
     }
