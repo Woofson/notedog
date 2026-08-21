@@ -48,15 +48,36 @@ active_border = "#FFCC66"         # Main active pane border color (Ayu Gold)
 inactive_border = "#242936"       # Inactive pane border color (Ayu Charcoal Slate)
 sidebar_title = "#36A3D9"         # Sidebar section headers title color (Ayu Cyan)
 active_sidebar_border = "#FF7733" # Active sidebar pane border color (Ayu Coral Orange)
-foreground = "#B3B1AD"           # Default text foreground color (Soft Off-White)
+foreground = "#B3B1AD"           # Default text foreground color (Soft Off-White / Grey)
 background = "none"              # Canvas background ("none" for transparent, or "#0F1419")
 highlight_bg = "#1F2430"         # Selected list item background fill (Dark Slate)
 highlight_fg = "#36A3D9"         # Selected list item text color (Ayu Cyan)
 encrypted_tag = "#F07178"        # Encrypted note tag & lock badge color (Coral Red)
 
-# 🖌️ INDIVIDUAL COMPONENT OVERRIDES (OPTIONAL)
-# You can individually customize borders and titles for Notebooks, Sections, Notes, and Preview!
-# notebook_border_active = "#FFCC66"
+# 🖌️ INDIVIDUAL ITEM TEXT COLOR & FONT WEIGHT OVERRIDES (OPTIONAL)
+# Colors: Hex code like "#B3B1AD", "gray", "white", "#36A3D9", etc.
+# Weights: "normal", "bold", "dim", "italic", "underlined"
+
+# -- Notebook Items
+# notebook_item_fg = "#B3B1AD"
+# notebook_item_weight = "normal"
+# notebook_item_selected_fg = "#36A3D9"
+# notebook_item_selected_weight = "bold"
+
+# -- Section Items
+# section_item_fg = "#B3B1AD"
+# section_item_weight = "normal"
+# section_item_selected_fg = "#36A3D9"
+# section_item_selected_weight = "bold"
+
+# -- Note Items
+# note_item_fg = "#B3B1AD"
+# note_item_weight = "normal"
+# note_item_selected_fg = "#36A3D9"
+# note_item_selected_weight = "bold"
+
+# 🖌️ INDIVIDUAL PANE BORDER & TITLE OVERRIDES (OPTIONAL)
+# notebook_border_active = "#FF7733"
 # notebook_border_inactive = "#242936"
 # notebook_title_active = "#36A3D9"
 # notebook_title_inactive = "#36A3D9"

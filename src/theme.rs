@@ -72,6 +72,22 @@ pub struct ThemeConfig {
     pub preview_border_inactive: Option<String>,
     pub preview_title_active: Option<String>,
     pub preview_title_inactive: Option<String>,
+
+    // Item colors & font weights ("bold", "normal", "dim", "italic")
+    pub notebook_item_fg: Option<String>,
+    pub notebook_item_weight: Option<String>,
+    pub notebook_item_selected_fg: Option<String>,
+    pub notebook_item_selected_weight: Option<String>,
+
+    pub section_item_fg: Option<String>,
+    pub section_item_weight: Option<String>,
+    pub section_item_selected_fg: Option<String>,
+    pub section_item_selected_weight: Option<String>,
+
+    pub note_item_fg: Option<String>,
+    pub note_item_weight: Option<String>,
+    pub note_item_selected_fg: Option<String>,
+    pub note_item_selected_weight: Option<String>,
 }
 
 impl Default for ThemeConfig {
@@ -106,6 +122,18 @@ impl Default for ThemeConfig {
             preview_border_inactive: None,
             preview_title_active: None,
             preview_title_inactive: None,
+            notebook_item_fg: None,
+            notebook_item_weight: None,
+            notebook_item_selected_fg: None,
+            notebook_item_selected_weight: None,
+            section_item_fg: None,
+            section_item_weight: None,
+            section_item_selected_fg: None,
+            section_item_selected_weight: None,
+            note_item_fg: None,
+            note_item_weight: None,
+            note_item_selected_fg: None,
+            note_item_selected_weight: None,
         }
     }
 }
@@ -153,6 +181,16 @@ pub struct Theme {
     pub preview_border_inactive: Color,
     pub preview_title_active: Color,
     pub preview_title_inactive: Color,
+
+    // Item Styles
+    pub notebook_item_style_normal: Style,
+    pub notebook_item_style_selected: Style,
+
+    pub section_item_style_normal: Style,
+    pub section_item_style_selected: Style,
+
+    pub note_item_style_normal: Style,
+    pub note_item_style_selected: Style,
 }
 
 impl Theme {
@@ -161,20 +199,42 @@ impl Theme {
         let inactive_border = parse_color(&config.inactive_border);
         let sidebar_title = parse_color(&config.sidebar_title);
         let active_sidebar_border = parse_color(&config.active_sidebar_border);
+        let foreground = parse_color(&config.foreground);
+        let background = if transparent { Color::Reset } else { parse_color(&config.background) };
+        let highlight_bg = parse_color(&config.highlight_bg);
+        let highlight_fg = parse_color(&config.highlight_fg);
+
+        let bg_style = if transparent { Style::default().bg(Color::Reset) } else { Style::default().bg(background) };
+
+        // Item style helper
+        let make_item_style = |fg_opt: Option<&str>, weight_opt: Option<&str>, default_fg: Color, default_mod: Modifier, is_selected: bool| -> Style {
+            let fg = fg_opt.map(parse_color).unwrap_or(default_fg);
+            let modifier = weight_opt.map(parse_modifier).unwrap_or(default_mod);
+            let mut style = bg_style.fg(fg).add_modifier(modifier);
+            if is_selected {
+                style = style.bg(highlight_bg);
+            }
+            style
+        };
+
+        let notebook_item_style_normal = make_item_style(config.notebook_item_fg.as_deref(), config.notebook_item_weight.as_deref(), foreground, Modifier::empty(), false);
+        let notebook_item_style_selected = make_item_style(config.notebook_item_selected_fg.as_deref(), config.notebook_item_selected_weight.as_deref(), highlight_fg, Modifier::BOLD, true);
+
+        let section_item_style_normal = make_item_style(config.section_item_fg.as_deref(), config.section_item_weight.as_deref(), foreground, Modifier::empty(), false);
+        let section_item_style_selected = make_item_style(config.section_item_selected_fg.as_deref(), config.section_item_selected_weight.as_deref(), highlight_fg, Modifier::BOLD, true);
+
+        let note_item_style_normal = make_item_style(config.note_item_fg.as_deref(), config.note_item_weight.as_deref(), foreground, Modifier::empty(), false);
+        let note_item_style_selected = make_item_style(config.note_item_selected_fg.as_deref(), config.note_item_selected_weight.as_deref(), highlight_fg, Modifier::BOLD, true);
 
         Self {
             active_border,
             inactive_border,
             sidebar_title,
             active_sidebar_border,
-            foreground: parse_color(&config.foreground),
-            background: if transparent {
-                Color::Reset
-            } else {
-                parse_color(&config.background)
-            },
-            highlight_bg: parse_color(&config.highlight_bg),
-            highlight_fg: parse_color(&config.highlight_fg),
+            foreground,
+            background,
+            highlight_bg,
+            highlight_fg,
             header_1: parse_color(&config.header_1),
             header_2: parse_color(&config.header_2),
             header_3: parse_color(&config.header_3),
@@ -206,6 +266,15 @@ impl Theme {
             preview_border_inactive: config.preview_border_inactive.as_deref().map(parse_color).unwrap_or(inactive_border),
             preview_title_active: config.preview_title_active.as_deref().map(parse_color).unwrap_or(active_border),
             preview_title_inactive: config.preview_title_inactive.as_deref().map(parse_color).unwrap_or(sidebar_title),
+
+            notebook_item_style_normal,
+            notebook_item_style_selected,
+
+            section_item_style_normal,
+            section_item_style_selected,
+
+            note_item_style_normal,
+            note_item_style_selected,
         }
     }
 
@@ -285,6 +354,10 @@ impl Theme {
         self.bg_style().fg(col).add_modifier(Modifier::BOLD)
     }
 
+    pub fn notebook_item_style(&self, selected: bool) -> Style {
+        if selected { self.notebook_item_style_selected } else { self.notebook_item_style_normal }
+    }
+
     pub fn section_border_style(&self, active: bool) -> Style {
         let col = if active { self.section_border_active } else { self.section_border_inactive };
         self.bg_style().fg(col).add_modifier(if active { Modifier::BOLD } else { Modifier::empty() })
@@ -293,6 +366,10 @@ impl Theme {
     pub fn section_title_style_comp(&self, active: bool) -> Style {
         let col = if active { self.section_title_active } else { self.section_title_inactive };
         self.bg_style().fg(col).add_modifier(Modifier::BOLD)
+    }
+
+    pub fn section_item_style(&self, selected: bool) -> Style {
+        if selected { self.section_item_style_selected } else { self.section_item_style_normal }
     }
 
     pub fn note_border_style(&self, active: bool) -> Style {
@@ -305,6 +382,10 @@ impl Theme {
         self.bg_style().fg(col).add_modifier(Modifier::BOLD)
     }
 
+    pub fn note_item_style(&self, selected: bool) -> Style {
+        if selected { self.note_item_style_selected } else { self.note_item_style_normal }
+    }
+
     pub fn preview_border_style(&self, active: bool) -> Style {
         let col = if active { self.preview_border_active } else { self.preview_border_inactive };
         self.bg_style().fg(col).add_modifier(if active { Modifier::BOLD } else { Modifier::empty() })
@@ -314,6 +395,22 @@ impl Theme {
         let col = if active { self.preview_title_active } else { self.preview_title_inactive };
         self.bg_style().fg(col).add_modifier(Modifier::BOLD)
     }
+}
+
+pub fn parse_modifier(modifier_str: &str) -> Modifier {
+    let mut modifier = Modifier::empty();
+    let lower = modifier_str.to_lowercase();
+    for part in lower.split('|').chain(lower.split(',')) {
+        match part.trim() {
+            "bold" => modifier |= Modifier::BOLD,
+            "dim" => modifier |= Modifier::DIM,
+            "italic" => modifier |= Modifier::ITALIC,
+            "underlined" | "underline" => modifier |= Modifier::UNDERLINED,
+            "reversed" | "reverse" => modifier |= Modifier::REVERSED,
+            _ => {}
+        }
+    }
+    modifier
 }
 
 pub fn parse_color(color_str: &str) -> Color {

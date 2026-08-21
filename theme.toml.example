@@ -10,11 +10,33 @@ active_border = "#FFCC66"         # Active main window border color (Ayu Gold)
 inactive_border = "#242936"       # Inactive window border color (Slate Charcoal)
 sidebar_title = "#36A3D9"         # Sidebar title header color (Ayu Steel Cyan)
 active_sidebar_border = "#FF7733" # Active sidebar block border (Ayu Warm Coral Orange)
-foreground = "#B3B1AD"           # Default text foreground (Soft Off-White)
+foreground = "#B3B1AD"           # Default text foreground (Soft Off-White / Grey)
 background = "none"              # Canvas background color ("none" for transparent, or "#0F1419")
 highlight_bg = "#1F2430"         # Selected list item background fill
 highlight_fg = "#36A3D9"         # Selected list item text color
 encrypted_tag = "#F07178"        # Encrypted note lock badge color
+
+# 🖌️ INDIVIDUAL ITEM TEXT COLOR & FONT WEIGHT OVERRIDES (OPTIONAL)
+# Colors: Hex code like "#B3B1AD", "gray", "white", "#36A3D9", etc.
+# Weights: "normal", "bold", "dim", "italic", "underlined"
+
+# -- Notebook Items
+notebook_item_fg = "#B3B1AD"
+notebook_item_weight = "normal"
+notebook_item_selected_fg = "#36A3D9"
+notebook_item_selected_weight = "bold"
+
+# -- Section Items
+section_item_fg = "#B3B1AD"
+section_item_weight = "normal"
+section_item_selected_fg = "#36A3D9"
+section_item_selected_weight = "bold"
+
+# -- Note Items
+note_item_fg = "#B3B1AD"
+note_item_weight = "normal"
+note_item_selected_fg = "#36A3D9"
+note_item_selected_weight = "bold"
 
 # 🖌️ INDIVIDUAL COMPONENT OVERRIDES (OPTIONAL)
 # Custom active/inactive title and border colors for each pane:
