@@ -60,13 +60,14 @@ pub fn render_navigation_sidebar(
     focused_pane: &str, // "notebooks", "sections", "notes"
     theme: &Theme,
     icons: &crate::config::IconConfig,
+    layout: &crate::config::LayoutConfig,
 ) {
     let chunks = Layout::default()
         .direction(Direction::Vertical)
         .constraints([
-            Constraint::Percentage(26), // Notebooks
-            Constraint::Percentage(34), // Sections
-            Constraint::Percentage(40), // Notes
+            crate::config::parse_constraint(&layout.notebooks_height, 26),
+            crate::config::parse_constraint(&layout.sections_height, 34),
+            crate::config::parse_constraint(&layout.notes_height, 40),
         ])
         .split(area);
 
@@ -77,10 +78,10 @@ pub fn render_navigation_sidebar(
         .enumerate()
         .map(|(i, nb)| {
             let is_selected = i == active_nb;
-            let icon = &icons.notebook;
+            let icon = icons.get_icon_for(&nb.name, &icons.notebook);
             let style = theme.notebook_item_style(is_selected);
             ListItem::new(Line::from(vec![
-                Span::styled(icon.as_str(), Style::default().fg(theme.sidebar_title)),
+                Span::styled(format!("{} ", icon), Style::default().fg(theme.sidebar_title)),
                 Span::styled(nb.name.clone(), style),
             ]))
         })
@@ -105,10 +106,10 @@ pub fn render_navigation_sidebar(
             .enumerate()
             .map(|(i, sec)| {
                 let is_selected = i == active_sec;
-                let icon = &icons.section;
+                let icon = icons.get_icon_for(&sec.name, &icons.section);
                 let style = theme.section_item_style(is_selected);
                 ListItem::new(Line::from(vec![
-                    Span::styled(icon.as_str(), Style::default().fg(theme.sidebar_title)),
+                    Span::styled(format!("{} ", icon), Style::default().fg(theme.sidebar_title)),
                     Span::styled(sec.name.clone(), style),
                 ]))
             })
@@ -135,7 +136,8 @@ pub fn render_navigation_sidebar(
             .enumerate()
             .map(|(i, note)| {
                 let is_selected = i == active_note;
-                let icon = if note.is_encrypted { &icons.encrypted_note } else { &icons.note };
+                let default_ic = if note.is_encrypted { &icons.encrypted_note } else { &icons.note };
+                let icon = icons.get_icon_for(&note.name, default_ic);
                 let name_style = if note.is_encrypted && !is_selected {
                     Style::default().fg(theme.encrypted_tag).add_modifier(Modifier::BOLD)
                 } else {
@@ -144,7 +146,7 @@ pub fn render_navigation_sidebar(
 
                 let lock_badge = if note.is_encrypted { " [ENC]" } else { "" };
                 ListItem::new(Line::from(vec![
-                    Span::styled(icon.as_str(), Style::default().fg(if note.is_encrypted { theme.encrypted_tag } else { theme.sidebar_title })),
+                    Span::styled(format!("{} ", icon), Style::default().fg(if note.is_encrypted { theme.encrypted_tag } else { theme.sidebar_title })),
                     Span::styled(note.name.clone(), name_style),
                     Span::styled(lock_badge, Style::default().fg(theme.encrypted_tag)),
                 ]))

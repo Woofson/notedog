@@ -39,10 +39,11 @@ pub fn render_ui(f: &mut Frame, app: &mut App) {
     let status_area = chunks[1];
 
     if !app.is_fullscreen {
-        // Main Area Split: Left Sidebar (26%) vs Right Main View (74%)
+        // Main Area Split: Configured Left Sidebar width vs Right Main View
+        let sidebar_constraint = crate::config::parse_constraint(&app.config.layout.sidebar_width, 26);
         let content_chunks = Layout::default()
             .direction(Direction::Horizontal)
-            .constraints([Constraint::Percentage(26), Constraint::Percentage(74)])
+            .constraints([sidebar_constraint, Constraint::Min(10)])
             .split(main_area);
 
         let sidebar_area = content_chunks[0];
@@ -66,6 +67,7 @@ pub fn render_ui(f: &mut Frame, app: &mut App) {
             focused_pane,
             &app.theme,
             &app.config.icons,
+            &app.config.layout,
         );
 
         // Main Pane: Preview or Built-in Editor

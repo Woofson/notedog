@@ -3,6 +3,8 @@ use serde::{Deserialize, Serialize};
 use std::fs;
 use std::path::PathBuf;
 
+use ratatui::layout::Constraint;
+
 fn default_note_prefix() -> String { "Note ".to_string() }
 fn default_note_postfix() -> String { "".to_string() }
 fn default_section_prefix() -> String { "Section ".to_string() }
@@ -15,6 +17,12 @@ fn default_note_icon() -> String { "📄 ".to_string() }
 fn default_encrypted_note_icon() -> String { "🔒 ".to_string() }
 fn default_preview_icon() -> String { "📖 ".to_string() }
 fn default_editor_icon() -> String { "✏️ ".to_string() }
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct IconRule {
+    pub pattern: String,
+    pub icon: String,
+}
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct IconConfig {
@@ -30,6 +38,23 @@ pub struct IconConfig {
     pub preview: String,
     #[serde(default = "default_editor_icon")]
     pub editor: String,
+    #[serde(default)]
+    pub rules: Vec<IconRule>,
+}
+
+impl IconConfig {
+    pub fn get_icon_for(&self, name: &str, default_fallback: &str) -> String {
+        for rule in &self.rules {
+            if let Ok(re) = regex::Regex::new(&rule.pattern) {
+                if re.is_match(name) {
+                    return rule.icon.clone();
+                }
+            } else if name.contains(&rule.pattern) {
+                return rule.icon.clone();
+            }
+        }
+        default_fallback.to_string()
+    }
 }
 
 impl Default for IconConfig {
@@ -41,8 +66,49 @@ impl Default for IconConfig {
             encrypted_note: default_encrypted_note_icon(),
             preview: default_preview_icon(),
             editor: default_editor_icon(),
+            rules: Vec::new(),
         }
     }
+}
+
+fn default_sidebar_width() -> String { "26%".to_string() }
+fn default_notebooks_height() -> String { "26%".to_string() }
+fn default_sections_height() -> String { "34%".to_string() }
+fn default_notes_height() -> String { "40%".to_string() }
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct LayoutConfig {
+    #[serde(default = "default_sidebar_width")]
+    pub sidebar_width: String,
+    #[serde(default = "default_notebooks_height")]
+    pub notebooks_height: String,
+    #[serde(default = "default_sections_height")]
+    pub sections_height: String,
+    #[serde(default = "default_notes_height")]
+    pub notes_height: String,
+}
+
+impl Default for LayoutConfig {
+    fn default() -> Self {
+        Self {
+            sidebar_width: default_sidebar_width(),
+            notebooks_height: default_notebooks_height(),
+            sections_height: default_sections_height(),
+            notes_height: default_notes_height(),
+        }
+    }
+}
+
+pub fn parse_constraint(s: &str, default_pct: u16) -> Constraint {
+    let trimmed = s.trim();
+    if trimmed.ends_with('%') {
+        if let Ok(pct) = trimmed[..trimmed.len() - 1].parse::<u16>() {
+            return Constraint::Percentage(pct);
+        }
+    } else if let Ok(val) = trimmed.parse::<u16>() {
+        return Constraint::Length(val);
+    }
+    Constraint::Percentage(default_pct)
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -65,6 +131,9 @@ pub struct Config {
     pub default_section_postfix: String,
     #[serde(default = "default_date_format")]
     pub date_format: String,
+
+    #[serde(default)]
+    pub layout: LayoutConfig,
 
     #[serde(default)]
     pub icons: IconConfig,
@@ -97,6 +166,7 @@ impl Default for Config {
             default_section_prefix: default_section_prefix(),
             default_section_postfix: default_section_postfix(),
             date_format: default_date_format(),
+            layout: LayoutConfig::default(),
             icons: IconConfig::default(),
             theme: ThemeConfig::default(),
         }

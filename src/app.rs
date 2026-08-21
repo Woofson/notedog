@@ -512,7 +512,14 @@ impl App {
                 self.launch_external_editor();
             }
             KeyCode::Up | KeyCode::Char('k') => match self.focused_pane {
-                Pane::Notebooks => {}
+                Pane::Notebooks => {
+                    if self.active_notebook_idx > 0 {
+                        self.active_notebook_idx -= 1;
+                        self.active_section_idx = 0;
+                        self.active_note_idx = 0;
+                        self.load_current_note();
+                    }
+                }
                 Pane::Sections => {
                     if self.active_section_idx > 0 {
                         self.active_section_idx -= 1;
@@ -533,7 +540,14 @@ impl App {
                 }
             },
             KeyCode::Down | KeyCode::Char('j') => match self.focused_pane {
-                Pane::Notebooks => {}
+                Pane::Notebooks => {
+                    if self.active_notebook_idx + 1 < self.manager.notebooks.len() {
+                        self.active_notebook_idx += 1;
+                        self.active_section_idx = 0;
+                        self.active_note_idx = 0;
+                        self.load_current_note();
+                    }
+                }
                 Pane::Sections => {
                     let sec_count = self
                         .manager

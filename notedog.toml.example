@@ -33,7 +33,14 @@ default_section_prefix = "Section "
 default_section_postfix = ""
 date_format = "%Y-%m-%d %H:%M"
 
-# 🎨 CUSTOMIZABLE SECTION ICONS
+# 📐 RESIZABLE LAYOUT DIMENSIONS (PERCENTAGE OR FIXED ROWS/COLUMNS)
+[layout]
+sidebar_width = "26%"      # e.g. "26%" or "30" fixed columns
+notebooks_height = "26%"   # e.g. "26%" or "8" fixed rows
+sections_height = "34%"    # e.g. "34%" or "10" fixed rows
+notes_height = "40%"       # e.g. "40%" or "12" fixed rows
+
+# 🎨 CUSTOMIZABLE SECTION ICONS & REGEX MATCHING RULES
 [icons]
 notebook = "📚 "
 section = "📂 "
@@ -41,6 +48,24 @@ note = "📄 "
 encrypted_note = "🔒 "
 preview = "📖 "
 editor = "✏️ "
+
+# Regex pattern matching rules for custom icons!
+# Tested in order against Notebook, Section, and Note names:
+[[icons.rules]]
+pattern = ".*Welcome.*"
+icon = "👋 "
+
+[[icons.rules]]
+pattern = "^Work.*"
+icon = "💼 "
+
+[[icons.rules]]
+pattern = ".*(General|Overview).*"
+icon = "📌 "
+
+[[icons.rules]]
+pattern = "^Note_01_.*"
+icon = "🚀 "
 
 # 🎨 HUMAN-UNDERSTANDABLE THEME CONFIGURATION
 [theme]
@@ -55,44 +80,17 @@ highlight_fg = "#36A3D9"         # Selected list item text color (Ayu Cyan)
 encrypted_tag = "#F07178"        # Encrypted note tag & lock badge color (Coral Red)
 
 # 🖌️ INDIVIDUAL ITEM TEXT COLOR & FONT WEIGHT OVERRIDES (OPTIONAL)
-# Colors: Hex code like "#B3B1AD", "gray", "white", "#36A3D9", etc.
-# Weights: "normal", "bold", "dim", "italic", "underlined"
-
-# -- Notebook Items
 # notebook_item_fg = "#B3B1AD"
 # notebook_item_weight = "normal"
 # notebook_item_selected_fg = "#36A3D9"
 # notebook_item_selected_weight = "bold"
 
-# -- Section Items
 # section_item_fg = "#B3B1AD"
 # section_item_weight = "normal"
 # section_item_selected_fg = "#36A3D9"
 # section_item_selected_weight = "bold"
 
-# -- Note Items
 # note_item_fg = "#B3B1AD"
 # note_item_weight = "normal"
 # note_item_selected_fg = "#36A3D9"
 # note_item_selected_weight = "bold"
-
-# 🖌️ INDIVIDUAL PANE BORDER & TITLE OVERRIDES (OPTIONAL)
-# notebook_border_active = "#FF7733"
-# notebook_border_inactive = "#242936"
-# notebook_title_active = "#36A3D9"
-# notebook_title_inactive = "#36A3D9"
-
-# section_border_active = "#FF7733"
-# section_border_inactive = "#242936"
-# section_title_active = "#36A3D9"
-# section_title_inactive = "#36A3D9"
-
-# note_border_active = "#FF7733"
-# note_border_inactive = "#242936"
-# note_title_active = "#36A3D9"
-# note_title_inactive = "#36A3D9"
-
-# preview_border_active = "#FFCC66"
-# preview_border_inactive = "#242936"
-# preview_title_active = "#FFCC66"
-# preview_title_inactive = "#36A3D9"
