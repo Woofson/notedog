@@ -2,7 +2,8 @@ use crate::markdown::render_markdown;
 use crate::theme::Theme;
 use ratatui::{
     layout::Rect,
-    text::Span,
+    style::{Modifier, Style},
+    text::{Line, Span},
     widgets::{Block, BorderType, Borders, Paragraph, Wrap},
     Frame,
 };
@@ -19,28 +20,30 @@ pub fn render_note_preview(
     theme: &Theme,
 ) {
     let rendered_lines = render_markdown(markdown_text, theme);
+    let line_count = rendered_lines.len();
 
     let title_prefix = if is_encrypted { " 🔒 " } else { " 📖 " };
-    let wrap_badge = if word_wrap { " [Wrap: ON]" } else { " [Wrap: OFF]" };
-    let full_title = format!("{}{}{}{} ", title_prefix, title, if is_encrypted { " [Encrypted]" } else { "" }, wrap_badge);
+    let wrap_badge = if word_wrap { "[Wrap: ON]" } else { "[Wrap: OFF]" };
+    let full_title = format!("{}{}{} ", title_prefix, title, if is_encrypted { " [Encrypted]" } else { "" });
 
     let block = Block::default()
         .borders(Borders::ALL)
-        .border_type(if focused {
-            BorderType::Double
-        } else {
-            BorderType::Plain
-        })
+        .border_type(BorderType::Rounded)
         .border_style(if focused {
-            theme.active_border_style()
+            theme.active_main_border_style()
         } else {
             theme.border_style()
         })
         .title(if focused {
-            Span::styled(format!(" ▶ {} ◀ ", full_title.trim()), theme.active_title_style())
+            Span::styled(format!(" {} ", full_title.trim()), theme.main_title_style())
         } else {
-            Span::styled(full_title, theme.title_style())
-        });
+            Span::styled(format!(" {} ", full_title.trim()), theme.title_style())
+        })
+        .title_bottom(Line::from(vec![
+            Span::styled(format!(" ┴─ {} Lines ", line_count), Style::default().fg(theme.border)),
+            Span::styled(format!("├── {} ", wrap_badge), Style::default().fg(theme.secondary)),
+            Span::styled("├── 👁 Preview ─┘ ", Style::default().fg(theme.accent).add_modifier(Modifier::BOLD)),
+        ]));
 
     let mut paragraph = Paragraph::new(rendered_lines)
         .block(block)

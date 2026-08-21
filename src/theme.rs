@@ -21,19 +21,19 @@ pub struct ThemeConfig {
 impl Default for ThemeConfig {
     fn default() -> Self {
         Self {
-            primary: "#FF8C00".to_string(),      // Warm Dark Orange
-            secondary: "#F39C12".to_string(),    // Amber / Warm Yellow
-            accent: "#FFD700".to_string(),       // Gold / Yellow
-            background: "none".to_string(),      // Transparent background by default
-            foreground: "#FFF8DC".to_string(),    // Cornsilk light text
-            border: "#E67E22".to_string(),        // Warm border
-            highlight_bg: "#3D2400".to_string(),  // Warm dark brown/amber highlight
-            highlight_fg: "#FFD700".to_string(),  // Gold highlight text
-            header_1: "#FF5500".to_string(),      // Deep Warm Orange Header 1
-            header_2: "#FFA500".to_string(),      // Bright Orange Header 2
-            header_3: "#FFD700".to_string(),      // Gold Header 3
-            code_bg: "#24180E".to_string(),       // Dark warm brown code block bg
-            encrypted_tag: "#E74C3C".to_string(), // Crimson red for encrypted notes
+            primary: "#FFCC66".to_string(),      // Ayu Gold (file_panel_border_active / file_panel_top_path)
+            secondary: "#36A3D9".to_string(),    // Ayu Cyan (sidebar_title / item_selected_fg / hotkeys)
+            accent: "#FF7733".to_string(),       // Ayu Coral Orange (sidebar_border_active / badges)
+            background: "none".to_string(),      // Transparent background (or #0F1419 full_screen_bg)
+            foreground: "#B3B1AD".to_string(),    // Ayu Soft Off-White (full_screen_fg)
+            border: "#242936".to_string(),        // Ayu Charcoal Slate (file_panel_border / footer_border)
+            highlight_bg: "#1F2430".to_string(),  // Ayu Dark Slate (sidebar_item_selected_bg)
+            highlight_fg: "#36A3D9".to_string(),  // Ayu Cyan (sidebar_item_selected_fg)
+            header_1: "#FF7733".to_string(),      // Ayu Coral Header 1
+            header_2: "#FFCC66".to_string(),      // Ayu Gold Header 2
+            header_3: "#36A3D9".to_string(),      // Ayu Cyan Header 3
+            code_bg: "#14191F".to_string(),       // Ayu Dark Slate Code block bg
+            encrypted_tag: "#F07178".to_string(), // Ayu Coral Red (modal_cancel_bg / encrypted notes)
         }
     }
 }
@@ -93,24 +93,54 @@ impl Theme {
     }
 
     pub fn border_style(&self) -> Style {
-        // Inactive border style: subtle dim charcoal/warm gray
-        self.bg_style().fg(Color::DarkGray)
+        // Inactive border style: #242936 (file_panel_border)
+        self.bg_style().fg(self.border)
     }
 
-    pub fn active_border_style(&self) -> Style {
-        // Active border style: vibrant glowing gold with bold modifier
+    pub fn active_main_border_style(&self) -> Style {
+        // Active main panel border style: #FFCC66 (Ayu Gold - file_panel_border_active)
+        self.bg_style().fg(self.primary).add_modifier(Modifier::BOLD)
+    }
+
+    pub fn active_sidebar_border_style(&self) -> Style {
+        // Active sidebar pane border style: #FF7733 (Ayu Coral Orange - sidebar_border_active)
         self.bg_style().fg(self.accent).add_modifier(Modifier::BOLD)
     }
 
+    pub fn sidebar_title_style(&self) -> Style {
+        // Sidebar title style: #36A3D9 (Ayu Cyan - sidebar_title)
+        self.bg_style().fg(self.secondary).add_modifier(Modifier::BOLD)
+    }
+
+    pub fn main_title_style(&self) -> Style {
+        // Main title style: #FFCC66 (Ayu Gold - file_panel_top_path)
+        self.bg_style().fg(self.primary).add_modifier(Modifier::BOLD)
+    }
+
+    pub fn active_border_style(&self) -> Style {
+        self.active_main_border_style()
+    }
+
     pub fn title_style(&self) -> Style {
-        self.bg_style().fg(Color::DarkGray)
+        self.main_title_style()
     }
 
     pub fn active_title_style(&self) -> Style {
         Style::default()
-            .fg(self.accent)
-            .bg(self.highlight_bg)
+            .fg(Color::Black)
+            .bg(self.primary)
             .add_modifier(Modifier::BOLD)
+    }
+
+    pub fn tab_active_style(&self) -> Style {
+        Style::default()
+            .bg(self.secondary)
+            .fg(Color::Black)
+            .add_modifier(Modifier::BOLD)
+    }
+
+    pub fn tab_inactive_style(&self) -> Style {
+        self.bg_style().fg(self.border)
     }
 
     pub fn highlight_style(&self) -> Style {
@@ -118,17 +148,6 @@ impl Theme {
             .bg(self.highlight_bg)
             .fg(self.highlight_fg)
             .add_modifier(Modifier::BOLD)
-    }
-
-    pub fn tab_active_style(&self) -> Style {
-        Style::default()
-            .bg(self.primary)
-            .fg(Color::Black)
-            .add_modifier(Modifier::BOLD)
-    }
-
-    pub fn tab_inactive_style(&self) -> Style {
-        self.bg_style().fg(Color::DarkGray)
     }
 }
 

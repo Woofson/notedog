@@ -33,25 +33,18 @@ default_section_prefix = "Section "
 default_section_postfix = ""
 date_format = "%Y-%m-%d %H:%M"
 
-# 🎨 WARM COLOR PALETTE THEME CONFIGURATION
+# 🎨 SUPERFILE AYU DARK THEME CONFIGURATION
 [theme]
-# Primary warm accent (borders, tab titles, headers)
-primary = "#FF8C00"       # Dark Orange
-
-# Secondary accent (active items, buttons, section titles)
-secondary = "#F39C12"     # Amber / Gold
-
-# Highlight accent (current selection, key shortcuts)
-accent = "#FFD700"        # Gold
-
-# Default text color
-foreground = "#FDFEFE"    # Warm Off-White
-
-# Background color (active if transparent_background = false)
-background = "#1C1B1A"    # Deep Charcoal
-
-# Inactive border color
-border = "#504A45"        # Warm Charcoal
-
-# Color indicator for encrypted notes
-encrypted_tag = "#E74C3C" # Coral Red
+primary = "#FFB454"       # Ayu Dark Amber Gold (Active borders & primary accent)
+secondary = "#39BAE6"     # Ayu Dark Steel Cyan (Sidebar header, icons, active pills)
+accent = "#FF7733"        # Ayu Dark Warm Coral (Title badges, special tags)
+foreground = "#E6E1CF"    # Ayu Dark Soft Off-White text
+background = "none"       # Transparent background (or #0F1419)
+border = "#1D2433"        # Ayu Dark Muted Slate Gray-Blue border
+highlight_bg = "#1B3B54"  # Ayu Dark Steel Blue selection fill
+highlight_fg = "#59C2FF"  # Ayu Dark Bright Cyan highlight text
+header_1 = "#FF7733"      # Ayu Coral Header 1
+header_2 = "#FFB454"      # Ayu Gold Header 2
+header_3 = "#39BAE6"      # Ayu Cyan Header 3
+code_bg = "#14191F"       # Ayu Dark Slate Code block bg
+encrypted_tag = "#F29668" # Ayu Warm Coral badge for encrypted notes

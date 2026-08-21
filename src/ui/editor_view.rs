@@ -31,21 +31,21 @@ pub fn render_editor_view(
 
     let block = Block::default()
         .borders(Borders::ALL)
-        .border_type(if focused {
-            BorderType::Double
-        } else {
-            BorderType::Plain
-        })
+        .border_type(BorderType::Rounded)
         .border_style(if focused {
-            theme.active_border_style()
+            theme.active_main_border_style()
         } else {
             theme.border_style()
         })
         .title(if focused {
-            Span::styled(format!(" ▶ {} ◀ ", title_str.trim()), theme.active_title_style())
+            Span::styled(format!(" {} ", title_str.trim()), theme.main_title_style())
         } else {
-            Span::styled(title_str, theme.title_style())
-        });
+            Span::styled(format!(" {} ", title_str.trim()), theme.title_style())
+        })
+        .title_bottom(Line::from(vec![
+            Span::styled(format!(" ┴─ Line {}/{} ", editor.cursor_y + 1, editor.lines.len()), Style::default().fg(theme.border)),
+            Span::styled("├── ✏️ Built-in Editor ─┘ ", Style::default().fg(theme.primary).add_modifier(Modifier::BOLD)),
+        ]));
 
     let mut display_lines: Vec<Line> = Vec::new();
 

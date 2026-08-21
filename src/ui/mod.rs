@@ -28,37 +28,25 @@ pub fn render_ui(f: &mut Frame, app: &mut App) {
     let chunks = Layout::default()
         .direction(Direction::Vertical)
         .constraints([
-            Constraint::Length(if app.is_fullscreen { 0 } else { 3 }), // Notebook Tabs header
-            Constraint::Min(10),                                       // Main content area
-            Constraint::Length(1),                                     // Bottom Status / Help bar
+            Constraint::Min(10),   // Main content area
+            Constraint::Length(1), // Bottom Status / Help bar
         ])
         .split(size);
 
-    let header_area = chunks[0];
-    let main_area = chunks[1];
-    let status_area = chunks[2];
+    let main_area = chunks[0];
+    let status_area = chunks[1];
 
     if !app.is_fullscreen {
-        // 1. Render Notebook Tabs
-        notebook_view::render_notebook_tabs(
-            f,
-            header_area,
-            &app.manager,
-            app.active_notebook_idx,
-            app.focused_pane == crate::app::Pane::Notebooks,
-            &app.theme,
-        );
-
-        // 2. Main Area Split: Left Sidebar vs Right Main View
+        // Main Area Split: Left Sidebar (26%) vs Right Main View (74%)
         let content_chunks = Layout::default()
             .direction(Direction::Horizontal)
-            .constraints([Constraint::Percentage(28), Constraint::Percentage(72)])
+            .constraints([Constraint::Percentage(26), Constraint::Percentage(74)])
             .split(main_area);
 
         let sidebar_area = content_chunks[0];
         let main_pane_area = content_chunks[1];
 
-        // Navigation Sidebar (Sections + Notes lists)
+        // Navigation Sidebar (Notebooks + Sections + Notes lists)
         let focused_pane = match app.focused_pane {
             crate::app::Pane::Notebooks => "notebooks",
             crate::app::Pane::Sections => "sections",
@@ -272,44 +260,54 @@ pub fn render_ui(f: &mut Frame, app: &mut App) {
 
 fn render_status_bar(f: &mut Frame, area: Rect, app: &App, theme: &Theme) {
     let mode_str = match app.view_mode {
-        ViewMode::Preview => "READ",
-        ViewMode::Editor => "EDIT",
+        ViewMode::Preview => " READ ",
+        ViewMode::Editor => " EDIT ",
     };
 
     let mode_color = match app.view_mode {
-        ViewMode::Preview => theme.primary,
-        ViewMode::Editor => theme.secondary,
+        ViewMode::Preview => theme.primary, // Ayu Amber Gold
+        ViewMode::Editor => theme.secondary, // Ayu Steel Cyan
     };
 
-    let fs_str = if app.is_fullscreen { " ⛶ FULLSCREEN " } else { " 🖥️ NORMAL " };
+    let fs_str = if app.is_fullscreen { " ⛶ FULLSCREEN " } else { "" };
 
-    let enc_status = if app.is_current_note_encrypted() {
-        " 🔒 Encrypted "
-    } else {
-        " 🔓 Plaintext "
-    };
+    let active_path = format!(
+        " 📚 {} / 📂 {} ",
+        app.current_notebook_name(),
+        app.current_section_name()
+    );
 
     let status_spans = vec![
         Span::styled(
-            format!(" {} ", mode_str),
+            mode_str,
             Style::default().bg(mode_color).fg(Color::Black).add_modifier(Modifier::BOLD),
         ),
+        if app.is_fullscreen {
+            Span::styled(
+                fs_str,
+                Style::default().bg(theme.accent).fg(Color::Black).add_modifier(Modifier::BOLD),
+            )
+        } else {
+            Span::styled("", Style::default())
+        },
+        Span::styled(active_path, Style::default().fg(theme.secondary).add_modifier(Modifier::BOLD)),
         Span::styled(
-            fs_str,
-            Style::default().bg(theme.accent).fg(Color::Black).add_modifier(Modifier::BOLD),
-        ),
-        Span::styled(
-            format!(" {} ", app.status_message),
+            format!(" │ {} ", app.status_message),
             Style::default().fg(theme.foreground),
         ),
-        Span::styled(enc_status, Style::default().fg(theme.accent)),
         Span::styled(" │ ", Style::default().fg(theme.border)),
-        Span::styled(" [f/F11] Fullscreen ", Style::default().fg(theme.primary).add_modifier(Modifier::BOLD)),
-        Span::styled(" [w] Wrap ", Style::default().fg(theme.secondary).add_modifier(Modifier::BOLD)),
-        Span::styled(" [?] Help ", Style::default().fg(theme.accent)),
-        Span::styled(" [Tab] Focus ", Style::default().fg(theme.primary)),
-        Span::styled(" [e] Edit ", Style::default().fg(theme.secondary)),
-        Span::styled(" [q] Quit ", Style::default().fg(theme.border)),
+        Span::styled("[Tab]", Style::default().fg(theme.primary).add_modifier(Modifier::BOLD)),
+        Span::styled(" Focus  ", theme.fg_style()),
+        Span::styled("[e]", Style::default().fg(theme.secondary).add_modifier(Modifier::BOLD)),
+        Span::styled(" Edit  ", theme.fg_style()),
+        Span::styled("[Ctrl+N]", Style::default().fg(theme.accent).add_modifier(Modifier::BOLD)),
+        Span::styled(" New  ", theme.fg_style()),
+        Span::styled("[r]", Style::default().fg(theme.primary).add_modifier(Modifier::BOLD)),
+        Span::styled(" Rename  ", theme.fg_style()),
+        Span::styled("[?]", Style::default().fg(theme.secondary).add_modifier(Modifier::BOLD)),
+        Span::styled(" Help  ", theme.fg_style()),
+        Span::styled("[q]", Style::default().fg(theme.border).add_modifier(Modifier::BOLD)),
+        Span::styled(" Quit", theme.fg_style()),
     ];
 
     let paragraph = Paragraph::new(Line::from(status_spans)).style(theme.bg_style());

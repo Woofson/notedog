@@ -134,6 +134,23 @@ impl App {
             .and_then(|sec| sec.notes.get(self.active_note_idx))
     }
 
+    pub fn current_notebook_name(&self) -> String {
+        self.manager
+            .notebooks
+            .get(self.active_notebook_idx)
+            .map(|nb| nb.name.clone())
+            .unwrap_or_else(|| "None".to_string())
+    }
+
+    pub fn current_section_name(&self) -> String {
+        self.manager
+            .notebooks
+            .get(self.active_notebook_idx)
+            .and_then(|nb| nb.sections.get(self.active_section_idx))
+            .map(|sec| sec.name.clone())
+            .unwrap_or_else(|| "None".to_string())
+    }
+
     pub fn current_note_title(&self) -> String {
         self.current_note_file()
             .map(|n| n.name.clone())
