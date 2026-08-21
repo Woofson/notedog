@@ -122,6 +122,12 @@ pub fn parse_constraint(s: &str, default_pct: u16) -> Constraint {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct TemplateRule {
+    pub pattern: String,
+    pub template: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Config {
     pub note_folder: String,
     pub editor: String,
@@ -147,6 +153,9 @@ pub struct Config {
 
     #[serde(default)]
     pub icons: IconConfig,
+
+    #[serde(default)]
+    pub templates: Vec<TemplateRule>,
 
     #[serde(default)]
     pub theme: ThemeConfig,
@@ -178,12 +187,87 @@ impl Default for Config {
             date_format: default_date_format(),
             layout: LayoutConfig::default(),
             icons: IconConfig::default(),
+            templates: Vec::new(),
             theme: ThemeConfig::default(),
         }
     }
 }
 
 impl Config {
+    pub fn get_template_for(&self, title: &str, date_str: &str) -> String {
+        // 1. Check custom template rules from config first
+        for rule in &self.templates {
+            if let Ok(re) = regex::Regex::new(&rule.pattern) {
+                if re.is_match(title) {
+                    return rule.template
+                        .replace("{{title}}", title)
+                        .replace("{{date}}", date_str);
+                }
+            } else if title.to_lowercase().contains(&rule.pattern.to_lowercase()) {
+                return rule.template
+                    .replace("{{title}}", title)
+                    .replace("{{date}}", date_str);
+            }
+        }
+
+        // 2. Built-in Preset Note Templates
+        let lower = title.to_lowercase();
+
+        // Todo / Task List Template
+        if lower.contains("todo") || lower.contains("tasks") || lower.contains("tasklist") || lower.contains("checklist") || lower.contains("to-do") {
+            return format!(
+                "# 📝 {}\n\n**Created**: {}\n\n- [ ] Task 1\n- [ ] Task 2\n- [ ] Task 3\n",
+                title, date_str
+            );
+        }
+
+        // Shopping / Grocery List Template
+        if lower.contains("shopping") || lower.contains("grocery") || lower.contains("groceries") || lower.contains("buy") {
+            return format!(
+                "# 🛒 {}\n\n**Created**: {}\n\n## 🥦 Produce & Fresh Food\n- [ ] Apples\n- [ ] Milk\n\n## 🥛 Dairy & Pantry\n- [ ] Bread\n- [ ] Coffee\n\n## 🧼 Household & Personal Care\n- [ ] Paper Towels\n",
+                title, date_str
+            );
+        }
+
+        // Meetings / Standup / Agenda Template
+        if lower.contains("meeting") || lower.contains("call") || lower.contains("agenda") || lower.contains("standup") {
+            return format!(
+                "# 📅 {}\n\n**Date**: {}\n**Attendees**: \n\n## 🎯 Agenda\n1. Topic 1\n2. Topic 2\n\n## 📝 Discussion & Notes\n- Key point 1\n\n## ⚡ Action Items\n- [ ] Action item 1\n",
+                title, date_str
+            );
+        }
+
+        // Ideas / Brainstorming Template
+        if lower.contains("idea") || lower.contains("brainstorm") || lower.contains("concept") {
+            return format!(
+                "# 💡 {}\n\n**Created**: {}\n\n## 🎯 Core Concept\n\n## 🚀 Potential Impact & Goals\n\n## 📝 Next Steps\n- [ ] Research & prototype\n",
+                title, date_str
+            );
+        }
+
+        // Work / Sprint / Project Template
+        if lower.contains("work") || lower.contains("project") || lower.contains("sprint") || lower.contains("job") {
+            return format!(
+                "# 💼 {}\n\n**Created**: {}\n\n## 📌 Overview\n\n## 🎯 Objectives\n- [ ] Objective 1\n\n## 📝 Status & Updates\n",
+                title, date_str
+            );
+        }
+
+        // Finance / Budget / Expenses Template
+        if lower.contains("finance") || lower.contains("budget") || lower.contains("money") || lower.contains("expense") {
+            return format!(
+                "# 💰 {}\n\n**Created**: {}\n\n## 📊 Summary\n- **Income**: $0.00\n- **Expenses**: $0.00\n\n## 📝 Expense Breakdown\n- [ ] Fixed Expenses\n",
+                title, date_str
+            );
+        }
+
+        // Default Regular Note Template
+        format!(
+            "# {}\n\n**Created**: {}\n\n- Write your note content here...\n",
+            title, date_str
+        )
+    }
+
     pub fn format_default_note_title(&self) -> String {
         let ts = crate::versioning::format_timestamp(
             std::time::SystemTime::now()

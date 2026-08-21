@@ -1,6 +1,6 @@
-# 🐶 Notedog (v0.4.0)
+# 🐶 Notedog (v0.5.0)
 
-> A vibrant, cross-platform TUI Notes application in Rust inspired by OneNote and Obsidian. Built by **Bolt J Woofson** (`https://github.com/Woofson/notedog`). Features Superfile & Ayu Dark inspired UI layout, customizable regex icon rules, resizable layout dimensions, human-understandable theme colors, endless file revision history, universal Markdown colors, native Mermaid flowcharts, and ChaCha20-Poly1305 + Argon2id note encryption.
+> A vibrant, cross-platform TUI Notes application in Rust inspired by OneNote and Obsidian. Built by **Bolt J Woofson** (`https://github.com/Woofson/notedog`). Features Smart Note Templates with interactive tickboxes, Superfile & Ayu Dark inspired UI layout, customizable regex icon rules, resizable layout dimensions, maximum per-item color & background customizability, endless file revision history, universal Markdown colors, native Mermaid flowcharts, and ChaCha20-Poly1305 + Argon2id note encryption.
 
 ---
 
@@ -12,13 +12,16 @@
 
 ## ✨ Features
 
-- **📚 Superfile-Style 3-Tier Navigation**: Organize notes into `Notebook` > `Section` (Subject/Project) > `Note.md` with glowing rounded borders (`BorderType::Rounded`) and bottom status badges.
+- **📝 Smart Note Templates with Tickboxes**:
+  - Auto-populates newly created notes based on title keyword matching (e.g. `Todo` with interactive task tickboxes, `Shopping` / `Grocery` with categorized produce/dairy tickbox lists, `Meeting` / `Agenda` with action items, `Ideas`, `Work`, `Finance`).
+  - Supports custom template rules in `notedog.toml` using `{{title}}` and `{{date}}` variables.
+- **🎨 Maximum Customizability & Per-Pane Item Styling**:
+  - Independent selected and unselected background fills (`notebook_item_selected_bg`, `section_item_selected_bg`, `note_item_selected_bg`).
+  - Independent text colors, icon colors, and font weights (`"bold"`, `"dim"`, `"italic"`, `"underlined"`, `"crossed_out"`).
+  - Human-understandable color naming (`active_border`, `inactive_border`, `sidebar_title`, `active_sidebar_border`, `foreground`, `background`).
+- **📚 Superfile-Style 3-Tier Navigation**: Organize notes into `Notebook` > `Section` (Subject/Project) > `Note.md` with glowing rounded borders (`BorderType::Rounded`) and bottom status badges. Full vertical navigation (`↑`/`↓` and `k`/`j`) for all 3 list boxes.
 - **📐 Resizable Layout Dimensions**: Set custom sidebar width and box heights as percentages (`"26%"`, `"34%"`) or fixed terminal rows/columns (`"30"`, `"12"`) in `notedog.toml`.
-- **🎨 Regex-Based Custom Icons**: Assign custom icons to Notebooks, Sections, or Notes using Regex pattern rules (`[[icons.rules]]`).
-- **🖌️ Human-Understandable Theme Colors & Item Styling**:
-  - Configure colors using human-understandable names (`active_border`, `inactive_border`, `sidebar_title`, `active_sidebar_border`, `foreground`, `background`).
-  - Set individual foreground colors and font weights (`"normal"`, `"bold"`, `"dim"`, `"italic"`) for Notebook, Section, and Note items.
-  - Per-pane title and border color overrides (`notebook_border_active`, `section_title_active`, `preview_border_active`, etc.).
+- **🎨 Regex-Based Custom Icons & Built-in Rules**: Built-in preset rules for Todo (`✅ `), Shopping (`🛒 `), Ideas (`💡 `), Work (`💼 `), Personal (`📔 `), Finance (`💰 `), Secrets (`🔒 `), Meetings (`📅 `), and Welcome (`👋 `). Fully customizable in `notedog.toml`.
 - **🎨 Universal Markdown Color Support**:
   - Uses standard HTML spans (`<span style="color:#FF8C00">text</span>`) and font tags (`<font color="gold">text</font>`).
   - Render colors inside the TUI **and** stay fully readable by Obsidian, VS Code, and GitHub Markdown previews.
@@ -54,7 +57,7 @@
 | `Ctrl+S` | Save current note (in built-in editor) |
 | `Ctrl+C` | Insert HTML Color tag (`<span style="color:#FF8C00">`) |
 | `Ctrl+M` | Insert Mermaid flowchart template |
-| `Ctrl+N` | **Contextual Create**: Create Notebook, Section, or Note depending on focused pane (with preview of auto-generated titles) |
+| `Ctrl+N` | **Contextual Create**: Create Notebook, Section, or Note depending on focused pane (applies smart templates with tickboxes) |
 | `Ctrl+B` | Create a new **Notebook** |
 | `Ctrl+K` | Create a new **Section** |
 | `r` / `Ctrl+R` | **Contextual Rename**: Rename focused Notebook, Section, or Note on disk |
@@ -113,14 +116,31 @@ preview        = "📖 "
 editor         = "✏️ "
 
 [[icons.rules]]
-pattern = ".*Welcome.*"
-icon = "👋 "
+pattern = "(?i).*(todo|tasks|tasklist|checklist|to-do).*"
+icon = "✅ "
 
 [[icons.rules]]
-pattern = "^Work.*"
-icon = "💼 "
+pattern = "(?i).*(shopping|grocery|groceries|store|buy|buy-list).*"
+icon = "🛒 "
 
-# 🎨 HUMAN-UNDERSTANDABLE THEME COLORS & ITEM TEXT STYLING
+# 📝 CUSTOM NOTE TEMPLATES (OPTIONAL)
+[[templates]]
+pattern = "(?i).*(sprint|retro).*"
+template = """# 🚀 {{title}}
+
+**Date**: {{date}}
+
+## 🟢 What Went Well
+- 
+
+## 🔴 What Needs Improvement
+- 
+
+## ⚡ Action Items
+- [ ] 
+"""
+
+# 🎨 MAXIMUM CUSTOMIZABILITY: THEME & SELECTION COLORS
 [theme]
 active_border         = "#FFCC66" # Active main window border color (Ayu Gold)
 inactive_border       = "#242936" # Inactive window border color (Ayu Charcoal Slate)
@@ -132,11 +152,15 @@ highlight_bg          = "#1F2430" # Selected list item background fill (Dark Sla
 highlight_fg          = "#36A3D9" # Selected list item text color (Ayu Cyan)
 encrypted_tag         = "#F07178" # Encrypted note tag & lock badge color (Coral Red)
 
-# Item font color and weight overrides:
-notebook_item_fg              = "#B3B1AD"
-notebook_item_weight          = "normal"   # "normal", "bold", "dim", "italic"
-notebook_item_selected_fg     = "#36A3D9"
-notebook_item_selected_weight = "bold"
+# Per-pane item styling & selection background overrides:
+note_item_bg                  = "none"
+note_item_fg                  = "#B3B1AD"
+note_item_weight              = "normal"
+note_item_selected_bg         = "#1F2430"
+note_item_selected_fg         = "#36A3D9"
+note_item_selected_weight     = "bold"
+note_icon_fg                  = "#36A3D9"
+note_icon_selected_fg         = "#36A3D9"
 ```
 
 ---

@@ -154,7 +154,7 @@ impl NoteManager {
         Ok(())
     }
 
-    pub fn create_note(&mut self, nb_idx: usize, sec_idx: usize, title: &str, is_encrypted: bool) -> io::Result<PathBuf> {
+    pub fn create_note(&mut self, nb_idx: usize, sec_idx: usize, title: &str, is_encrypted: bool, initial_content: Option<&str>) -> io::Result<PathBuf> {
         if let Some(nb) = self.notebooks.get(nb_idx) {
             if let Some(sec) = nb.sections.get(sec_idx) {
                 let sanitized = title.trim().replace(' ', "_");
@@ -164,12 +164,14 @@ impl NoteManager {
                     format!("{}.md", sanitized)
                 };
                 let path = sec.path.join(&filename);
+                let content = initial_content
+                    .map(|s| s.to_string())
+                    .unwrap_or_else(|| format!("# {}\n\nCreated on Notedog.\n", title));
+
                 if !is_encrypted {
-                    let default_content = format!("# {}\n\nCreated on Notedog.\n\n- Write your colorful markdown here...\n", title);
-                    fs::write(&path, default_content)?;
+                    fs::write(&path, content)?;
                 } else {
-                    let initial = format!("# {} (Encrypted)\n\nThis note is encrypted.\n", title);
-                    if let Ok(bytes) = encrypt_note(&initial, "notedog") {
+                    if let Ok(bytes) = encrypt_note(&content, "notedog") {
                         fs::write(&path, bytes)?;
                     } else {
                         fs::write(&path, b"")?;

@@ -94,6 +94,28 @@ icon = "📅 "
 pattern = "(?i).*(welcome|intro|getting-started|readme).*"
 icon = "👋 "
 
+# 📝 CUSTOM NOTE TEMPLATE RULES (OPTIONAL)
+# Automatically populates newly created notes based on title pattern matching!
+# Replaces {{title}} with note title and {{date}} with timestamp.
+# Built-in presets automatically handle Todo (tickboxes), Shopping (category tickboxes),
+# Meetings (agenda & action items), Ideas, Work Projects, and Finance.
+
+[[templates]]
+pattern = "(?i).*(sprint|retro).*"
+template = """# 🚀 {{title}}
+
+**Date**: {{date}}
+
+## 🟢 What Went Well
+- 
+
+## 🔴 What Needs Improvement
+- 
+
+## ⚡ Action Items
+- [ ] 
+"""
+
 # 🎨 HUMAN-UNDERSTANDABLE THEME CONFIGURATION
 [theme]
 active_border = "#FFCC66"         # Main active pane border color (Ayu Gold)

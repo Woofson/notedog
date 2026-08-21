@@ -644,11 +644,19 @@ impl App {
                             self.load_current_note();
                         }
                         "note" => {
+                            let now = std::time::SystemTime::now()
+                                .duration_since(std::time::UNIX_EPOCH)
+                                .unwrap_or_default()
+                                .as_secs();
+                            let date_str = crate::versioning::format_timestamp(now);
+                            let template_content = self.config.get_template_for(&name, &date_str);
+
                             if let Ok(_path) = self.manager.create_note(
                                 self.active_notebook_idx,
                                 self.active_section_idx,
                                 &name,
                                 false,
+                                Some(&template_content),
                             ) {
                                 self.load_current_note();
                             }
