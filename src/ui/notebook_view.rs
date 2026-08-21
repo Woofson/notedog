@@ -81,10 +81,11 @@ pub fn render_navigation_sidebar(
             let icon = icons.get_icon_for(&nb.name, &icons.notebook);
             let style = theme.notebook_item_style(is_selected);
             let icon_style = theme.notebook_icon_style(is_selected);
+            let bg_style = theme.notebook_item_bg_style(is_selected);
             ListItem::new(Line::from(vec![
                 Span::styled(format!("{} ", icon), icon_style),
                 Span::styled(nb.name.clone(), style),
-            ])).style(style)
+            ])).style(bg_style)
         })
         .collect();
 
@@ -110,10 +111,11 @@ pub fn render_navigation_sidebar(
                 let icon = icons.get_icon_for(&sec.name, &icons.section);
                 let style = theme.section_item_style(is_selected);
                 let icon_style = theme.section_icon_style(is_selected);
+                let bg_style = theme.section_item_bg_style(is_selected);
                 ListItem::new(Line::from(vec![
                     Span::styled(format!("{} ", icon), icon_style),
                     Span::styled(sec.name.clone(), style),
-                ])).style(style)
+                ])).style(bg_style)
             })
             .collect()
     } else {
@@ -152,11 +154,12 @@ pub fn render_navigation_sidebar(
                 } else {
                     theme.note_icon_style(is_selected)
                 };
+                let bg_style = theme.note_item_bg_style(is_selected);
                 ListItem::new(Line::from(vec![
                     Span::styled(format!("{} ", icon), icon_style),
                     Span::styled(note.name.clone(), name_style),
                     Span::styled(lock_badge, Style::default().fg(theme.encrypted_tag)),
-                ])).style(name_style)
+                ])).style(bg_style)
             })
             .collect()
     } else {
