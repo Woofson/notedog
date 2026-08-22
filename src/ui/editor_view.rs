@@ -16,7 +16,7 @@ pub fn render_editor_view(
     focused: bool,
     show_title: bool,
     theme: &Theme,
-    icons: &crate::config::IconConfig,
+    _icons: &crate::config::IconConfig,
 ) {
     let chunks = Layout::default()
         .direction(Direction::Vertical)
@@ -28,18 +28,23 @@ pub fn render_editor_view(
 
     let visible_height = main_area.height.saturating_sub(2) as usize;
 
+    let border_color = theme.inactive_border;
+    let mod_flag = if editor.is_modified { "*" } else { "" };
+
     let mut block = Block::default()
         .borders(Borders::ALL)
         .border_type(BorderType::Rounded)
         .border_style(theme.preview_border_style(focused))
         .title_bottom(Line::from(vec![
-            Span::styled(format!(" ┴─ Line {}/{} ", editor.cursor_y + 1, editor.lines.len()), Style::default().fg(theme.inactive_border)),
-            Span::styled(format!("├── {} Built-in Editor ─┘ ", icons.editor.trim()), Style::default().fg(theme.active_border).add_modifier(Modifier::BOLD)),
+            Span::styled(
+                format!(" ┴─ line {}/{}{} ── edit ─┘ ", editor.cursor_y + 1, editor.lines.len(), mod_flag),
+                Style::default().fg(border_color),
+            ),
         ]));
 
     if show_title {
-        let modified_badge = if editor.is_modified { " [*] " } else { " " };
-        let title_str = format!(" {} EDITING: {}{} ", icons.editor.trim(), note_name, modified_badge);
+        let modified_badge = if editor.is_modified { " [*]" } else { "" };
+        let title_str = format!(" {}{}", note_name, modified_badge);
         block = block.title(Span::styled(format!(" {} ", title_str.trim()), theme.preview_title_style(focused)));
     }
 
@@ -99,7 +104,7 @@ pub fn render_editor_view(
         Span::styled(" [Ctrl+M] ", Style::default().fg(theme.accent).add_modifier(Modifier::BOLD)),
         Span::styled("Insert Mermaid  ", theme.fg_style()),
         Span::styled(" [Esc] ", Style::default().fg(theme.border).add_modifier(Modifier::BOLD)),
-        Span::styled("Preview Mode", theme.fg_style()),
+        Span::styled("Exit  ", theme.fg_style()),
     ];
 
     let toolbar_block = Block::default()
