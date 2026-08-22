@@ -128,6 +128,19 @@ pub struct TemplateRule {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum ThemeSetting {
+    Name(String),
+    Inline(ThemeConfig),
+}
+
+impl Default for ThemeSetting {
+    fn default() -> Self {
+        ThemeSetting::Name("notedog".to_string())
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Config {
     pub note_folder: String,
     pub editor: String,
@@ -136,6 +149,9 @@ pub struct Config {
     pub show_help_bar: bool,
     pub word_wrap: bool,
     pub default_notebook: String,
+
+    #[serde(default)]
+    pub theme: ThemeSetting,
 
     #[serde(default = "default_note_prefix")]
     pub default_note_prefix: String,
@@ -156,9 +172,6 @@ pub struct Config {
 
     #[serde(default)]
     pub templates: Vec<TemplateRule>,
-
-    #[serde(default)]
-    pub theme: ThemeConfig,
 }
 
 impl Default for Config {
@@ -180,6 +193,7 @@ impl Default for Config {
             show_help_bar: true,
             word_wrap: true,
             default_notebook: "Personal".to_string(),
+            theme: ThemeSetting::default(),
             default_note_prefix: default_note_prefix(),
             default_note_postfix: default_note_postfix(),
             default_section_prefix: default_section_prefix(),
@@ -188,7 +202,6 @@ impl Default for Config {
             layout: LayoutConfig::default(),
             icons: IconConfig::default(),
             templates: Vec::new(),
-            theme: ThemeConfig::default(),
         }
     }
 }
@@ -288,6 +301,20 @@ impl Config {
         format!("{}{}{}", self.default_section_prefix, ts, self.default_section_postfix)
     }
 
+    pub fn load_theme(&self) -> ThemeConfig {
+        match &self.theme {
+            ThemeSetting::Name(name) => crate::theme::load_theme_by_name(name),
+            ThemeSetting::Inline(tc) => tc.clone(),
+        }
+    }
+
+    pub fn theme_name(&self) -> &str {
+        match &self.theme {
+            ThemeSetting::Name(name) => name.as_str(),
+            ThemeSetting::Inline(_) => "custom",
+        }
+    }
+
     pub fn config_dir() -> PathBuf {
         dirs::config_dir()
             .unwrap_or_else(|| PathBuf::from("~/.config"))
@@ -306,6 +333,9 @@ impl Config {
             eprintln!("Warning: could not create config dir {:?}: {}", config_dir, e);
         }
 
+        // Initialize ~/.config/notedog/themes/ with all built-in themes!
+        crate::theme::init_themes_dir(&config_dir);
+
         if !example_cfg_path.exists() {
             let _ = fs::write(&example_cfg_path, include_str!("../notedog.toml.example"));
         }
@@ -323,6 +353,7 @@ impl Config {
             let comment_header = r#"# Notedog Configuration File
 # Location: ~/.config/notedog/notedog.toml or ~/.config/notedog/notedog.conf
 # See ~/.config/notedog/notedog.toml.example for full options & comments
+# Themes are stored in ~/.config/notedog/themes/<theme>.toml
 
 "#;
             let full_content = format!("{}{}", comment_header, content);
@@ -360,3 +391,55 @@ pub fn expand_path(p: &str) -> PathBuf {
     }
     PathBuf::from(p)
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_config_theme_name_deserialization() {
+        let toml_str = r#"
+            note_folder = "~/Notes"
+            editor = "builtin"
+            secrets_file = "~/.config/notedog/secrets.toml"
+            transparent_background = true
+            show_help_bar = true
+            word_wrap = true
+            default_notebook = "Personal"
+            theme = "nord"
+        "#;
+        let cfg: Config = toml::from_str(toml_str).expect("failed to deserialize config");
+        assert_eq!(cfg.theme_name(), "nord");
+        let tc = cfg.load_theme();
+        assert_eq!(tc.active_border, "#88C0D0");
+    }
+
+    #[test]
+    fn test_config_legacy_inline_theme() {
+        let toml_str = r##"
+            note_folder = "~/Notes"
+            editor = "builtin"
+            secrets_file = "~/.config/notedog/secrets.toml"
+            transparent_background = true
+            show_help_bar = true
+            word_wrap = true
+            default_notebook = "Personal"
+
+            [theme]
+            active_border = "#123456"
+        "##;
+        let cfg: Config = toml::from_str(toml_str).expect("failed to deserialize legacy config");
+        assert_eq!(cfg.theme_name(), "custom");
+        let tc = cfg.load_theme();
+        assert_eq!(tc.active_border, "#123456");
+    }
+
+    #[test]
+    fn test_config_default_theme() {
+        let cfg = Config::default();
+        assert_eq!(cfg.theme_name(), "notedog");
+        let tc = cfg.load_theme();
+        assert_eq!(tc.active_border, "#FFCC66");
+    }
+}
+

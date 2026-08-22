@@ -28,4 +28,8 @@ package() {
   install -Dm644 "LICENSE" "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
   install -Dm644 "README.md" "$pkgdir/usr/share/doc/$pkgname/README.md"
   install -Dm644 "notedog.toml.example" "$pkgdir/usr/share/doc/$pkgname/notedog.toml.example"
+  install -Dm644 "theme.toml.example" "$pkgdir/usr/share/doc/$pkgname/theme.toml.example"
+  for theme in themes/*.toml; do
+    install -Dm644 "$theme" "$pkgdir/usr/share/doc/$pkgname/$theme"
+  done
 }

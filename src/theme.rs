@@ -1,5 +1,115 @@
+use crate::config::{expand_path, Config};
 use ratatui::style::{Color, Modifier, Style};
 use serde::{Deserialize, Serialize};
+use std::fs;
+use std::path::{Path, PathBuf};
+
+// Built-in Theme Embedded TOML definitions
+pub const THEME_NOTEDOG: &str = include_str!("../themes/notedog.toml");
+pub const THEME_NORD: &str = include_str!("../themes/nord.toml");
+pub const THEME_CATPPUCCIN_MOCHA: &str = include_str!("../themes/catppuccin-mocha.toml");
+pub const THEME_CATPPUCCIN_LATTE: &str = include_str!("../themes/catppuccin-latte.toml");
+pub const THEME_CATPPUCCIN_MACCHIATO: &str = include_str!("../themes/catppuccin-macchiato.toml");
+pub const THEME_CATPPUCCIN_FRAPPE: &str = include_str!("../themes/catppuccin-frappe.toml");
+pub const THEME_DRACULA: &str = include_str!("../themes/dracula.toml");
+pub const THEME_GRUVBOX: &str = include_str!("../themes/gruvbox.toml");
+pub const THEME_TOKYO_NIGHT: &str = include_str!("../themes/tokyo-night.toml");
+pub const THEME_AYU_DARK: &str = include_str!("../themes/ayu-dark.toml");
+pub const THEME_SOLARIZED_DARK: &str = include_str!("../themes/solarized-dark.toml");
+pub const THEME_MONOKAI: &str = include_str!("../themes/monokai.toml");
+
+pub const BUILTIN_THEMES: &[(&str, &str)] = &[
+    ("notedog.toml", THEME_NOTEDOG),
+    ("nord.toml", THEME_NORD),
+    ("catppuccin-mocha.toml", THEME_CATPPUCCIN_MOCHA),
+    ("catppuccin-latte.toml", THEME_CATPPUCCIN_LATTE),
+    ("catppuccin-macchiato.toml", THEME_CATPPUCCIN_MACCHIATO),
+    ("catppuccin-frappe.toml", THEME_CATPPUCCIN_FRAPPE),
+    ("dracula.toml", THEME_DRACULA),
+    ("gruvbox.toml", THEME_GRUVBOX),
+    ("tokyo-night.toml", THEME_TOKYO_NIGHT),
+    ("ayu-dark.toml", THEME_AYU_DARK),
+    ("solarized-dark.toml", THEME_SOLARIZED_DARK),
+    ("monokai.toml", THEME_MONOKAI),
+];
+
+pub fn themes_dir() -> PathBuf {
+    Config::config_dir().join("themes")
+}
+
+pub fn init_themes_dir(config_dir: &Path) {
+    let themes_path = config_dir.join("themes");
+    if let Err(e) = fs::create_dir_all(&themes_path) {
+        eprintln!("Warning: could not create themes dir {:?}: {}", themes_path, e);
+        return;
+    }
+
+    for (filename, content) in BUILTIN_THEMES {
+        let theme_file = themes_path.join(filename);
+        if !theme_file.exists() {
+            let _ = fs::write(&theme_file, content);
+        }
+    }
+}
+
+pub fn load_theme_by_name(name: &str) -> ThemeConfig {
+    let trimmed = name.trim();
+    if trimmed.is_empty() {
+        return ThemeConfig::default();
+    }
+
+    let dir = themes_dir();
+
+    // 1. Try file path in ~/.config/notedog/themes/
+    let direct_file = dir.join(trimmed);
+    if direct_file.exists() && direct_file.is_file() {
+        if let Ok(content) = fs::read_to_string(&direct_file) {
+            if let Ok(tc) = toml::from_str::<ThemeConfig>(&content) {
+                return tc;
+            }
+        }
+    }
+
+    let toml_file = dir.join(format!("{}.toml", trimmed));
+    if toml_file.exists() && toml_file.is_file() {
+        if let Ok(content) = fs::read_to_string(&toml_file) {
+            if let Ok(tc) = toml::from_str::<ThemeConfig>(&content) {
+                return tc;
+            }
+        }
+    }
+
+    // 2. Try arbitrary expanded file path
+    let expanded = expand_path(trimmed);
+    if expanded.exists() && expanded.is_file() {
+        if let Ok(content) = fs::read_to_string(&expanded) {
+            if let Ok(tc) = toml::from_str::<ThemeConfig>(&content) {
+                return tc;
+            }
+        }
+    }
+
+    // 3. Match against built-in themes by name / aliases
+    let normalized = trimmed.to_lowercase();
+    let theme_str = match normalized.as_str() {
+        "notedog" | "default" | "notedog.toml" => THEME_NOTEDOG,
+        "nord" | "nord.toml" => THEME_NORD,
+        "catppuccin" | "catputtchin" | "catpuccino" | "catppuccin-mocha" | "catppuccin_mocha" | "mocha" | "catppuccin-mocha.toml" => THEME_CATPPUCCIN_MOCHA,
+        "catppuccin-latte" | "catppuccin_latte" | "latte" | "catppuccin-latte.toml" => THEME_CATPPUCCIN_LATTE,
+        "catppuccin-macchiato" | "catppuccin_macchiato" | "macchiato" | "catppuccin-macchiato.toml" => THEME_CATPPUCCIN_MACCHIATO,
+        "catppuccin-frappe" | "catppuccin_frappe" | "frappe" | "catppuccin-frappe.toml" => THEME_CATPPUCCIN_FRAPPE,
+        "dracula" | "dracula.toml" => THEME_DRACULA,
+        "gruvbox" | "gruvbox-dark" | "gruvbox_dark" | "gruvbox.toml" => THEME_GRUVBOX,
+        "tokyo-night" | "tokyonight" | "tokyo_night" | "tokyo-night.toml" => THEME_TOKYO_NIGHT,
+        "ayu" | "ayu-dark" | "ayu_dark" | "ayu-dark.toml" => THEME_AYU_DARK,
+        "solarized" | "solarized-dark" | "solarized_dark" | "solarized-dark.toml" => THEME_SOLARIZED_DARK,
+        "monokai" | "monokai.toml" => THEME_MONOKAI,
+        _ => THEME_NOTEDOG,
+    };
+
+    toml::from_str::<ThemeConfig>(theme_str).unwrap_or_default()
+}
+
 
 fn default_active_border() -> String { "#FFCC66".to_string() }
 fn default_inactive_border() -> String { "#242936".to_string() }
@@ -232,6 +342,11 @@ pub struct Theme {
 }
 
 impl Theme {
+    pub fn load_for_config(config: &Config) -> Self {
+        let theme_config = config.load_theme();
+        Theme::from_config(&theme_config, config.transparent_background)
+    }
+
     pub fn from_config(config: &ThemeConfig, transparent: bool) -> Self {
         let active_border = parse_color(&config.active_border);
         let inactive_border = parse_color(&config.inactive_border);
@@ -554,3 +669,65 @@ pub fn parse_color(color_str: &str) -> Color {
         _ => Color::Reset,
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_all_builtin_themes_deserialize_validly() {
+        for (name, content) in BUILTIN_THEMES {
+            let res = toml::from_str::<ThemeConfig>(content);
+            assert!(
+                res.is_ok(),
+                "Failed to deserialize built-in theme {}: {:?}",
+                name,
+                res.err()
+            );
+        }
+    }
+
+    #[test]
+    fn test_load_theme_by_name_presets() {
+        let nord = load_theme_by_name("nord");
+        assert_eq!(nord.active_border, "#88C0D0");
+
+        let mocha = load_theme_by_name("catppuccin");
+        assert_eq!(mocha.active_border, "#CBA6F7");
+
+        let mocha_explicit = load_theme_by_name("catppuccin-mocha");
+        assert_eq!(mocha_explicit.active_border, "#CBA6F7");
+
+        let dracula = load_theme_by_name("dracula");
+        assert_eq!(dracula.active_border, "#BD93F9");
+
+        let gruvbox = load_theme_by_name("gruvbox");
+        assert_eq!(gruvbox.active_border, "#FABD2F");
+
+        let tokyo = load_theme_by_name("tokyo-night");
+        assert_eq!(tokyo.active_border, "#7AA2F7");
+
+        let ayu = load_theme_by_name("ayu-dark");
+        assert_eq!(ayu.active_border, "#FFCC66");
+
+        let solarized = load_theme_by_name("solarized-dark");
+        assert_eq!(solarized.active_border, "#268BD2");
+
+        let monokai = load_theme_by_name("monokai");
+        assert_eq!(monokai.active_border, "#FD971F");
+    }
+
+    #[test]
+    fn test_init_themes_dir() {
+        let temp_dir = std::env::temp_dir().join(format!("notedog_test_{}", rand::random::<u64>()));
+        init_themes_dir(&temp_dir);
+        let themes_path = temp_dir.join("themes");
+        assert!(themes_path.exists());
+        for (filename, _) in BUILTIN_THEMES {
+            assert!(themes_path.join(filename).exists(), "Missing generated theme file: {}", filename);
+        }
+        let _ = std::fs::remove_dir_all(&temp_dir);
+    }
+}
+
+

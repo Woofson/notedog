@@ -1,4 +1,4 @@
-# 🐶 Notedog (v0.5.1)
+# 🐶 Notedog (v0.5.2)
 
 > A vibrant, cross-platform TUI Notes application in Rust inspired by OneNote and Obsidian. Built by **Bolt J Woofson** (`https://github.com/Woofson/notedog`). Features Smart Note Templates with interactive tickboxes, Superfile & Ayu Dark inspired UI layout, customizable regex icon rules, resizable layout dimensions, maximum per-item color & background customizability, endless file revision history, universal Markdown colors, native Mermaid flowcharts, and ChaCha20-Poly1305 + Argon2id note encryption.
 
@@ -143,19 +143,28 @@ template = """# 🚀 {{title}}
 - [ ] 
 """
 
-# 🎨 MAXIMUM CUSTOMIZABILITY: THEME & SELECTION COLORS
-[theme]
-active_border         = "#FFCC66" # Active main window border color (Ayu Gold)
-inactive_border       = "#242936" # Inactive window border color (Ayu Charcoal Slate)
-sidebar_title         = "#36A3D9" # Sidebar title headers color (Ayu Cyan)
-active_sidebar_border = "#FF7733" # Active sidebar block border (Ayu Coral Orange)
-foreground            = "#B3B1AD" # Body text foreground color (Soft Off-White)
-background            = "none"    # Canvas background ("none" for transparent, or "#0F1419")
-highlight_bg          = "#1F2430" # Selected list item background fill (Dark Slate)
-highlight_fg          = "#36A3D9" # Selected list item text color (Ayu Cyan)
-encrypted_tag         = "#F07178" # Encrypted note tag & lock badge color (Coral Red)
+# 🎨 THEME CONFIGURATION
+# Theme files are stored in ~/.config/notedog/themes/<theme>.toml
+# Built-in themes include: "notedog", "nord", "catppuccin-mocha", "catppuccin-latte",
+# "dracula", "gruvbox", "tokyo-night", "ayu-dark", "solarized-dark", "monokai"
+theme = "notedog"
+```
 
-# Per-pane item styling & selection background overrides:
+### 🎨 Custom Themes (`~/.config/notedog/themes/`)
+Create any `.toml` file in `~/.config/notedog/themes/` (e.g. `my-theme.toml`), and set `theme = "my-theme"` in `notedog.toml`:
+
+```toml
+active_border         = "#FFCC66" # Active main window border color
+inactive_border       = "#242936" # Inactive window border color
+sidebar_title         = "#36A3D9" # Sidebar title headers color
+active_sidebar_border = "#FF7733" # Active sidebar block border
+foreground            = "#B3B1AD" # Body text foreground color
+background            = "none"    # Canvas background ("none" for transparent, or "#0F1419")
+highlight_bg          = "#1F2430" # Selected list item background fill
+highlight_fg          = "#36A3D9" # Selected list item text color
+encrypted_tag         = "#F07178" # Encrypted note lock badge color
+
+# Per-pane item styling & selection background overrides (optional):
 note_item_bg                  = "none"
 note_item_fg                  = "#B3B1AD"
 note_item_weight              = "normal"

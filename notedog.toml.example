@@ -25,6 +25,25 @@ word_wrap = true
 # Default active notebook on launch
 default_notebook = "Personal"
 
+# 🎨 ACTIVE THEME SELECTION
+# Themes are stored as separate .toml files in ~/.config/notedog/themes/
+# To change themes, simply change this entry to any theme file name:
+#
+# Built-in themes automatically generated in ~/.config/notedog/themes/:
+#   - "notedog"              (Default NoteDog warm gold & cyan theme)
+#   - "nord"                 (Arctic blue & polar night)
+#   - "catppuccin-mocha"     (Soothing dark pastel theme)
+#   - "catppuccin-latte"     (Crisp light theme)
+#   - "catppuccin-macchiato" (Medium dark pastel theme)
+#   - "catppuccin-frappe"    (Muted dark pastel theme)
+#   - "dracula"              (Vibrant purple/pink/cyan dark theme)
+#   - "gruvbox"              (Retro groove warm contrast theme)
+#   - "tokyo-night"          (Tokyo cyberpunk neon dark theme)
+#   - "ayu-dark"             (Classic Ayu dark slate theme)
+#   - "solarized-dark"       (Precision teal/blue low-contrast theme)
+#   - "monokai"              (Classic vibrant high-contrast theme)
+theme = "notedog"
+
 # 📝 DEFAULT TITLE TEMPLATES & DATE FORMATTING
 # Used when creating new Notes (Ctrl+N) or Sections (Ctrl+K) with blank input
 default_note_prefix = "Note "
@@ -122,47 +141,3 @@ template = """# 🚀 {{title}}
 - [ ] 
 """
 
-# 🎨 HUMAN-UNDERSTANDABLE THEME CONFIGURATION
-[theme]
-active_border = "#FFCC66"         # Main active pane border color (Ayu Gold)
-inactive_border = "#242936"       # Inactive pane border color (Ayu Charcoal Slate)
-sidebar_title = "#36A3D9"         # Sidebar section headers title color (Ayu Cyan)
-active_sidebar_border = "#FF7733" # Active sidebar pane border color (Ayu Coral Orange)
-foreground = "#B3B1AD"           # Default text foreground color (Soft Off-White / Grey)
-background = "none"              # Canvas background ("none" for transparent, or "#0F1419")
-highlight_bg = "#1F2430"         # Default selected item background fill (Dark Slate)
-highlight_fg = "#36A3D9"         # Default selected item text color (Ayu Cyan)
-encrypted_tag = "#F07178"        # Encrypted note tag & lock badge color (Coral Red)
-
-# 🖌️ MAXIMUM CUSTOMIZABILITY: PER-ITEM BACKGROUND, TEXT, ICON & WEIGHT OVERRIDES
-# Icon colors (`notebook_icon_fg`, etc.) work on Nerd Fonts and monochromatic glyphs!
-
-# -- Notebook Items
-# notebook_item_bg = "none"
-# notebook_item_fg = "#B3B1AD"
-# notebook_item_weight = "normal"
-# notebook_item_selected_bg = "#1F2430"
-# notebook_item_selected_fg = "#36A3D9"
-# notebook_item_selected_weight = "bold"
-# notebook_icon_fg = "#FFCC66"
-# notebook_icon_selected_fg = "#FF7733"
-
-# -- Section Items
-# section_item_bg = "none"
-# section_item_fg = "#B3B1AD"
-# section_item_weight = "normal"
-# section_item_selected_bg = "#1F2430"
-# section_item_selected_fg = "#36A3D9"
-# section_item_selected_weight = "bold"
-# section_icon_fg = "#36A3D9"
-# section_icon_selected_fg = "#FFCC66"
-
-# -- Note Items
-# note_item_bg = "none"
-# note_item_fg = "#B3B1AD"
-# note_item_weight = "normal"
-# note_item_selected_bg = "#1F2430"
-# note_item_selected_fg = "#36A3D9"
-# note_item_selected_weight = "bold"
-# note_icon_fg = "#F07178"
-# note_icon_selected_fg = "#36A3D9"

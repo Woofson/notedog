@@ -88,7 +88,7 @@ pub struct App {
 
 impl App {
     pub fn new(config: Config) -> Self {
-        let theme = Theme::from_config(&config.theme, config.transparent_background);
+        let theme = Theme::load_for_config(&config);
         let note_folder = config.resolved_note_folder();
         let manager = NoteManager::new(note_folder.clone());
         let version_manager = VersionManager::new(&note_folder);
