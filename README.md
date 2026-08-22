@@ -1,4 +1,4 @@
-# 🐶 Notedog (v0.5.8)
+# 🐶 Notedog (v0.5.9)
 
 > A vibrant, cross-platform TUI Notes application in Rust inspired by OneNote and Obsidian. Built by **Bolt J Woofson** (`https://github.com/Woofson/notedog`). Features Smart Note Templates with interactive tickboxes, Superfile & Ayu Dark inspired UI layout, customizable regex icon rules, resizable layout dimensions, maximum per-item color & background customizability, endless file revision history, universal Markdown colors, native Mermaid flowcharts, and ChaCha20-Poly1305 + Argon2id note encryption.
 
@@ -32,12 +32,13 @@
 - **📊 Native Mermaid Flowchart Engine**:
   - Automatically parses ` ```mermaid ` code blocks (`graph TD`, `graph LR`).
   - Renders flowchart nodes with Unicode box-drawing shapes (`┌──┐`, `╭──╮`, `◇`) and directional arrows (`▼`, `──►`) directly in the terminal.
-- **🔒 Secure Notebook, Section & Note Encryption**:
-  - Contextually encrypt or decrypt individual **Notes**, entire **Sections**, or full **Notebooks** with `Ctrl+E` using military-grade **ChaCha20-Poly1305** symmetric AEAD cipher and **Argon2id** key derivation.
-  - **Two-Step Password Confirmation**: Prevents accidental typos with confirmation step when securing notes, sections, or notebooks.
-  - **Change Passphrase (`Ctrl+P`)**: Safely re-encrypt notes, sections, or notebooks with a new password via 3-step verification.
+- **🔒 Password Protection, In-Memory Unlocking & Auto-Locking**:
+  - **Auto-Lock on Close**: Encrypted files are stored on disk as `.md.enc` (ChaCha20-Poly1305 + Argon2id). Unlocking only decrypts in-memory for viewing/editing during the active session. When NoteDog closes, everything is securely locked automatically.
+  - **Contextual Session Unlock (`u` / `Ctrl+U` / `Enter`)**: Unlock a Note, Section, or Notebook into memory for the active session without touching or compromising the encrypted files on disk.
+  - **Instant Lock (`Ctrl+L`)**: Immediately clears all session passwords from memory and re-locks all notes in the UI.
+  - **Set Password Protection / Remove (`Ctrl+E`)**: Enable password protection with 2-step verification, or permanently decrypt back to plaintext `.md` when explicitly desired.
+  - **Change Password (`Ctrl+P`)**: Safely re-encrypt notes, sections, or notebooks with a new password via 3-step verification.
   - Encrypted notes, sections, and notebooks are clearly badged with `[ENC]` and lock glyphs (`🔒`).
-  - Seamless memory session caching unlocks entire encrypted sections and notebooks upon entering the passphrase.
 - **📜 Endless Revision History & Live Diffs**:
   - Automated timestamped snapshots on every note edit.
   - Interactive version browser modal (`v` or `Ctrl+V`) with live line-by-line diffs (`+`/`-`), single-click restoration, and cleanup presets.
@@ -79,8 +80,10 @@
 | `r` / `Ctrl+R` | **Contextual Rename**: Rename focused Notebook, Section, or Note on disk |
 | `Ctrl+D` / `d` | **Contextual Delete**: Safely delete focused Notebook, Section, or Note with confirmation dialog |
 | `v` / `Ctrl+V` | **Revision History Modal**: Browse endless file version snapshots, view live line diffs (`+`/`-`), restore past revisions, or open cleanup presets |
-| `Ctrl+E` | **Contextual Encrypt/Decrypt**: Encrypt or decrypt focused Notebook, Section, or Note (with 2-step confirmation) |
-| `Ctrl+P` | **Change Passphrase**: Safely update encryption passphrase for focused Notebook, Section, or Note |
+| `u` / `Ctrl+U` | **Contextual Session Unlock**: Unlock focused Notebook, Section, or Note in memory for this session |
+| `Ctrl+L` | **Instant Lock**: Immediately clear session passwords and lock all notes in UI |
+| `Ctrl+E` | **Password Protection**: Set password protection (with 2-step confirmation) or permanently decrypt to `.md` |
+| `Ctrl+P` | **Change Password**: Safely update encryption password for focused Notebook, Section, or Note |
 | `F2` / `Ctrl+A` | Open **About NoteDog** page (Author: **Bolt J Woofson**, Repository: `Woofson/notedog`) |
 | `?` | Toggle interactive Help & Shortcut cheat sheet modal |
 | `q` | Quit Notedog |

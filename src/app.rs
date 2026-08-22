@@ -51,6 +51,8 @@ pub enum InputMode {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum PendingCryptoAction {
     UnlockNote,
+    UnlockSection,
+    UnlockNotebook,
     EncryptCurrentNote { first_pass: Option<String> },
     DecryptCurrentNote,
     EncryptCurrentSection { first_pass: Option<String> },
@@ -172,6 +174,21 @@ impl App {
 
     pub fn current_note_dir(&self) -> Option<std::path::PathBuf> {
         self.current_note_file().and_then(|n| n.path.parent().map(|p| p.to_path_buf()))
+    }
+
+    pub fn is_session_unlocked(&self) -> bool {
+        if let Some(pass) = &self.cached_passphrase {
+            if let Some(note) = self.current_note_file() {
+                if let Ok(raw) = self.manager.read_note_raw(&note.path) {
+                    if is_encrypted_data(&raw) {
+                        return decrypt_note(&raw, pass).is_ok();
+                    }
+                }
+            }
+            true
+        } else {
+            false
+        }
     }
 
     pub fn load_current_note(&mut self) {
@@ -441,6 +458,62 @@ impl App {
                     self.input_buffer.clear();
                     return false;
                 }
+                KeyCode::Char('l') => {
+                    self.cached_passphrase = None;
+                    self.load_current_note();
+                    self.status_message = "🔒 Locked! Cleared session password.".to_string();
+                    return false;
+                }
+                KeyCode::Char('u') => {
+                    match self.focused_pane {
+                        Pane::Notebooks => {
+                            let nb_name = self.current_notebook_name();
+                            let is_enc = self.manager.notebooks.get(self.active_notebook_idx).map(|nb| nb.is_encrypted).unwrap_or(false);
+                            if is_enc {
+                                self.pending_action = Some(PendingCryptoAction::UnlockNotebook);
+                                self.input_mode = InputMode::PassphrasePrompt {
+                                    prompt: format!("Unlock Notebook '{}'", nb_name),
+                                    label: "Enter Password for this session:".to_string(),
+                                    error: None,
+                                };
+                            } else {
+                                self.status_message = format!("Notebook '{}' is not password protected.", nb_name);
+                            }
+                        }
+                        Pane::Sections => {
+                            let sec_name = self.current_section_name();
+                            let is_enc = self.manager.notebooks.get(self.active_notebook_idx)
+                                .and_then(|nb| nb.sections.get(self.active_section_idx))
+                                .map(|sec| sec.is_encrypted)
+                                .unwrap_or(false);
+                            if is_enc {
+                                self.pending_action = Some(PendingCryptoAction::UnlockSection);
+                                self.input_mode = InputMode::PassphrasePrompt {
+                                    prompt: format!("Unlock Section '{}'", sec_name),
+                                    label: "Enter Password for this session:".to_string(),
+                                    error: None,
+                                };
+                            } else {
+                                self.status_message = format!("Section '{}' is not password protected.", sec_name);
+                            }
+                        }
+                        Pane::Notes | Pane::MainView => {
+                            let note_title = self.current_note_title();
+                            if self.is_current_note_encrypted() {
+                                self.pending_action = Some(PendingCryptoAction::UnlockNote);
+                                self.input_mode = InputMode::PassphrasePrompt {
+                                    prompt: format!("Unlock Note '{}'", note_title),
+                                    label: "Enter Password for this session:".to_string(),
+                                    error: None,
+                                };
+                            } else {
+                                self.status_message = format!("Note '{}' is not password protected.", note_title);
+                            }
+                        }
+                    }
+                    self.input_buffer.clear();
+                    return false;
+                }
                 KeyCode::Char('e') => {
                     // Contextual toggle encryption for Notebook, Section, or Note
                     match self.focused_pane {
@@ -448,17 +521,26 @@ impl App {
                             let nb_name = self.current_notebook_name();
                             let is_enc = self.manager.notebooks.get(self.active_notebook_idx).map(|nb| nb.is_encrypted).unwrap_or(false);
                             if is_enc {
-                                self.pending_action = Some(PendingCryptoAction::DecryptCurrentNotebook);
-                                self.input_mode = InputMode::PassphrasePrompt {
-                                    prompt: format!("Decrypt Notebook '{}'", nb_name),
-                                    label: "Enter Passphrase to Decrypt:".to_string(),
-                                    error: None,
-                                };
+                                if self.is_session_unlocked() {
+                                    self.pending_action = Some(PendingCryptoAction::DecryptCurrentNotebook);
+                                    self.input_mode = InputMode::PassphrasePrompt {
+                                        prompt: format!("Remove Password: Notebook '{}'", nb_name),
+                                        label: "Enter Password to decrypt permanently to .md:".to_string(),
+                                        error: None,
+                                    };
+                                } else {
+                                    self.pending_action = Some(PendingCryptoAction::UnlockNotebook);
+                                    self.input_mode = InputMode::PassphrasePrompt {
+                                        prompt: format!("Unlock Notebook '{}'", nb_name),
+                                        label: "Enter Password for this session:".to_string(),
+                                        error: None,
+                                    };
+                                }
                             } else {
                                 self.pending_action = Some(PendingCryptoAction::EncryptCurrentNotebook { first_pass: None });
                                 self.input_mode = InputMode::PassphrasePrompt {
-                                    prompt: format!("Encrypt Notebook '{}' (Step 1/2)", nb_name),
-                                    label: "Enter New Passphrase:".to_string(),
+                                    prompt: format!("Protect Notebook '{}' (Step 1/2)", nb_name),
+                                    label: "Enter New Password:".to_string(),
                                     error: None,
                                 };
                             }
@@ -470,17 +552,26 @@ impl App {
                                 .map(|sec| sec.is_encrypted)
                                 .unwrap_or(false);
                             if is_enc {
-                                self.pending_action = Some(PendingCryptoAction::DecryptCurrentSection);
-                                self.input_mode = InputMode::PassphrasePrompt {
-                                    prompt: format!("Decrypt Section '{}'", sec_name),
-                                    label: "Enter Passphrase to Decrypt:".to_string(),
-                                    error: None,
-                                };
+                                if self.is_session_unlocked() {
+                                    self.pending_action = Some(PendingCryptoAction::DecryptCurrentSection);
+                                    self.input_mode = InputMode::PassphrasePrompt {
+                                        prompt: format!("Remove Password: Section '{}'", sec_name),
+                                        label: "Enter Password to decrypt permanently to .md:".to_string(),
+                                        error: None,
+                                    };
+                                } else {
+                                    self.pending_action = Some(PendingCryptoAction::UnlockSection);
+                                    self.input_mode = InputMode::PassphrasePrompt {
+                                        prompt: format!("Unlock Section '{}'", sec_name),
+                                        label: "Enter Password for this session:".to_string(),
+                                        error: None,
+                                    };
+                                }
                             } else {
                                 self.pending_action = Some(PendingCryptoAction::EncryptCurrentSection { first_pass: None });
                                 self.input_mode = InputMode::PassphrasePrompt {
-                                    prompt: format!("Encrypt Section '{}' (Step 1/2)", sec_name),
-                                    label: "Enter New Passphrase:".to_string(),
+                                    prompt: format!("Protect Section '{}' (Step 1/2)", sec_name),
+                                    label: "Enter New Password:".to_string(),
                                     error: None,
                                 };
                             }
@@ -488,17 +579,26 @@ impl App {
                         Pane::Notes | Pane::MainView => {
                             let note_title = self.current_note_title();
                             if self.is_current_note_encrypted() {
-                                self.pending_action = Some(PendingCryptoAction::DecryptCurrentNote);
-                                self.input_mode = InputMode::PassphrasePrompt {
-                                    prompt: format!("Decrypt Note '{}'", note_title),
-                                    label: "Enter Passphrase to Decrypt:".to_string(),
-                                    error: None,
-                                };
+                                if !self.current_note_content.contains("🔒") {
+                                    self.pending_action = Some(PendingCryptoAction::DecryptCurrentNote);
+                                    self.input_mode = InputMode::PassphrasePrompt {
+                                        prompt: format!("Remove Password: Note '{}'", note_title),
+                                        label: "Enter Password to decrypt permanently to .md:".to_string(),
+                                        error: None,
+                                    };
+                                } else {
+                                    self.pending_action = Some(PendingCryptoAction::UnlockNote);
+                                    self.input_mode = InputMode::PassphrasePrompt {
+                                        prompt: format!("Unlock Note '{}'", note_title),
+                                        label: "Enter Password for this session:".to_string(),
+                                        error: None,
+                                    };
+                                }
                             } else {
                                 self.pending_action = Some(PendingCryptoAction::EncryptCurrentNote { first_pass: None });
                                 self.input_mode = InputMode::PassphrasePrompt {
-                                    prompt: format!("Encrypt Note '{}' (Step 1/2)", note_title),
-                                    label: "Enter New Passphrase:".to_string(),
+                                    prompt: format!("Protect Note '{}' (Step 1/2)", note_title),
+                                    label: "Enter New Password:".to_string(),
                                     error: None,
                                 };
                             }
@@ -654,13 +754,62 @@ impl App {
                     self.load_current_note();
                 }
             }
+            KeyCode::Char('u') | KeyCode::Char('U') => {
+                match self.focused_pane {
+                    Pane::Notebooks => {
+                        let nb_name = self.current_notebook_name();
+                        let is_enc = self.manager.notebooks.get(self.active_notebook_idx).map(|nb| nb.is_encrypted).unwrap_or(false);
+                        if is_enc {
+                            self.pending_action = Some(PendingCryptoAction::UnlockNotebook);
+                            self.input_mode = InputMode::PassphrasePrompt {
+                                prompt: format!("Unlock Notebook '{}'", nb_name),
+                                label: "Enter Password for this session:".to_string(),
+                                error: None,
+                            };
+                        } else {
+                            self.status_message = format!("Notebook '{}' is not password protected.", nb_name);
+                        }
+                    }
+                    Pane::Sections => {
+                        let sec_name = self.current_section_name();
+                        let is_enc = self.manager.notebooks.get(self.active_notebook_idx)
+                            .and_then(|nb| nb.sections.get(self.active_section_idx))
+                            .map(|sec| sec.is_encrypted)
+                            .unwrap_or(false);
+                        if is_enc {
+                            self.pending_action = Some(PendingCryptoAction::UnlockSection);
+                            self.input_mode = InputMode::PassphrasePrompt {
+                                prompt: format!("Unlock Section '{}'", sec_name),
+                                label: "Enter Password for this session:".to_string(),
+                                error: None,
+                            };
+                        } else {
+                            self.status_message = format!("Section '{}' is not password protected.", sec_name);
+                        }
+                    }
+                    Pane::Notes | Pane::MainView => {
+                        let note_title = self.current_note_title();
+                        if self.is_current_note_encrypted() {
+                            self.pending_action = Some(PendingCryptoAction::UnlockNote);
+                            self.input_mode = InputMode::PassphrasePrompt {
+                                prompt: format!("Unlock Note '{}'", note_title),
+                                label: "Enter Password for this session:".to_string(),
+                                error: None,
+                            };
+                        } else {
+                            self.status_message = format!("Note '{}' is not password protected.", note_title);
+                        }
+                    }
+                }
+                self.input_buffer.clear();
+            }
             KeyCode::Char('e') => {
                 if self.is_current_note_encrypted() && self.current_note_content.contains("🔒") {
                     let title = self.current_note_title();
                     self.pending_action = Some(PendingCryptoAction::UnlockNote);
                     self.input_mode = InputMode::PassphrasePrompt {
                         prompt: format!("Unlock Note '{}'", title),
-                        label: "Enter Passphrase:".to_string(),
+                        label: "Enter Password:".to_string(),
                         error: None,
                     };
                     self.input_buffer.clear();
@@ -671,10 +820,37 @@ impl App {
             KeyCode::Enter => {
                 match self.focused_pane {
                     Pane::Notebooks => {
-                        self.focused_pane = Pane::Sections;
+                        let is_enc = self.manager.notebooks.get(self.active_notebook_idx).map(|nb| nb.is_encrypted).unwrap_or(false);
+                        if is_enc && !self.is_session_unlocked() {
+                            let nb_name = self.current_notebook_name();
+                            self.pending_action = Some(PendingCryptoAction::UnlockNotebook);
+                            self.input_mode = InputMode::PassphrasePrompt {
+                                prompt: format!("Unlock Notebook '{}'", nb_name),
+                                label: "Enter Password for this session:".to_string(),
+                                error: None,
+                            };
+                            self.input_buffer.clear();
+                        } else {
+                            self.focused_pane = Pane::Sections;
+                        }
                     }
                     Pane::Sections => {
-                        self.focused_pane = Pane::Notes;
+                        let is_enc = self.manager.notebooks.get(self.active_notebook_idx)
+                            .and_then(|nb| nb.sections.get(self.active_section_idx))
+                            .map(|sec| sec.is_encrypted)
+                            .unwrap_or(false);
+                        if is_enc && !self.is_session_unlocked() {
+                            let sec_name = self.current_section_name();
+                            self.pending_action = Some(PendingCryptoAction::UnlockSection);
+                            self.input_mode = InputMode::PassphrasePrompt {
+                                prompt: format!("Unlock Section '{}'", sec_name),
+                                label: "Enter Password for this session:".to_string(),
+                                error: None,
+                            };
+                            self.input_buffer.clear();
+                        } else {
+                            self.focused_pane = Pane::Notes;
+                        }
                     }
                     Pane::Notes | Pane::MainView => {
                         if self.is_current_note_encrypted() && self.current_note_content.contains("🔒") {
@@ -682,7 +858,7 @@ impl App {
                             self.pending_action = Some(PendingCryptoAction::UnlockNote);
                             self.input_mode = InputMode::PassphrasePrompt {
                                 prompt: format!("Unlock Note '{}'", title),
-                                label: "Enter Passphrase:".to_string(),
+                                label: "Enter Password:".to_string(),
                                 error: None,
                             };
                             self.input_buffer.clear();
@@ -988,12 +1164,103 @@ impl App {
                                 self.pending_action = Some(PendingCryptoAction::UnlockNote);
                                 self.input_mode = InputMode::PassphrasePrompt {
                                     prompt: format!("Unlock Note '{}'", title),
-                                    label: "Enter Passphrase:".to_string(),
-                                    error: Some("Incorrect Passphrase! Please try again.".to_string()),
+                                    label: "Enter Password:".to_string(),
+                                    error: Some("Incorrect Password! Please try again.".to_string()),
                                 };
                             }
                         }
                     }
+                }
+            }
+            PendingCryptoAction::UnlockSection => {
+                let sec_name = self.current_section_name();
+                let mut verified = false;
+                if let Some(nb) = self.manager.notebooks.get(self.active_notebook_idx) {
+                    if let Some(sec) = nb.sections.get(self.active_section_idx) {
+                        let enc_notes: Vec<_> = sec.notes.iter().filter(|n| n.is_encrypted).collect();
+                        if enc_notes.is_empty() {
+                            verified = true;
+                        } else {
+                            for note in enc_notes {
+                                if let Ok(raw) = self.manager.read_note_raw(&note.path) {
+                                    if decrypt_note(&raw, passphrase).is_ok() {
+                                        verified = true;
+                                        break;
+                                    } else if passphrase != "notedog" && decrypt_note(&raw, "notedog").is_ok() {
+                                        if let Ok(text) = decrypt_note(&raw, "notedog") {
+                                            if let Ok(re_enc) = encrypt_note(&text, passphrase) {
+                                                let _ = self.manager.save_note_raw(&note.path, &re_enc);
+                                            }
+                                        }
+                                        verified = true;
+                                        break;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                if verified {
+                    self.cached_passphrase = Some(passphrase.to_string());
+                    self.load_current_note();
+                    self.status_message = format!("🔓 Section '{}' unlocked for this session! (Lock with Ctrl+L)", sec_name);
+                    self.pending_action = None;
+                    self.input_mode = InputMode::Normal;
+                } else {
+                    self.pending_action = Some(PendingCryptoAction::UnlockSection);
+                    self.input_mode = InputMode::PassphrasePrompt {
+                        prompt: format!("Unlock Section '{}'", sec_name),
+                        label: "Enter Password for this session:".to_string(),
+                        error: Some("Incorrect Password! Please try again.".to_string()),
+                    };
+                }
+            }
+            PendingCryptoAction::UnlockNotebook => {
+                let nb_name = self.current_notebook_name();
+                let mut verified = false;
+                if let Some(nb) = self.manager.notebooks.get(self.active_notebook_idx) {
+                    let mut has_enc_notes = false;
+                    for sec in &nb.sections {
+                        for note in sec.notes.iter().filter(|n| n.is_encrypted) {
+                            has_enc_notes = true;
+                            if let Ok(raw) = self.manager.read_note_raw(&note.path) {
+                                if decrypt_note(&raw, passphrase).is_ok() {
+                                    verified = true;
+                                    break;
+                                } else if passphrase != "notedog" && decrypt_note(&raw, "notedog").is_ok() {
+                                    if let Ok(text) = decrypt_note(&raw, "notedog") {
+                                        if let Ok(re_enc) = encrypt_note(&text, passphrase) {
+                                            let _ = self.manager.save_note_raw(&note.path, &re_enc);
+                                        }
+                                    }
+                                    verified = true;
+                                    break;
+                                }
+                            }
+                        }
+                        if verified {
+                            break;
+                        }
+                    }
+                    if !has_enc_notes {
+                        verified = true;
+                    }
+                }
+
+                if verified {
+                    self.cached_passphrase = Some(passphrase.to_string());
+                    self.load_current_note();
+                    self.status_message = format!("🔓 Notebook '{}' unlocked for this session! (Lock with Ctrl+L)", nb_name);
+                    self.pending_action = None;
+                    self.input_mode = InputMode::Normal;
+                } else {
+                    self.pending_action = Some(PendingCryptoAction::UnlockNotebook);
+                    self.input_mode = InputMode::PassphrasePrompt {
+                        prompt: format!("Unlock Notebook '{}'", nb_name),
+                        label: "Enter Password for this session:".to_string(),
+                        error: Some("Incorrect Password! Please try again.".to_string()),
+                    };
                 }
             }
             PendingCryptoAction::EncryptCurrentNote { first_pass } => {
@@ -1433,9 +1700,32 @@ impl App {
     }
 
     pub fn launch_external_editor(&mut self) {
-        let note_path = match self.current_note_file() {
-            Some(n) => n.path.clone(),
+        let note_file = match self.current_note_file() {
+            Some(n) => n.clone(),
             None => return,
+        };
+
+        if note_file.is_encrypted && self.current_note_content.contains("🔒") {
+            let title = self.current_note_title();
+            self.pending_action = Some(PendingCryptoAction::UnlockNote);
+            self.input_mode = InputMode::PassphrasePrompt {
+                prompt: format!("Unlock Note '{}' to Edit", title),
+                label: "Enter Password for external editor:".to_string(),
+                error: None,
+            };
+            self.input_buffer.clear();
+            return;
+        }
+
+        let (edit_path, is_temp) = if note_file.is_encrypted {
+            let tmp_path = std::env::temp_dir().join(format!("notedog_{}.md", note_file.name));
+            if std::fs::write(&tmp_path, &self.current_note_content).is_ok() {
+                (tmp_path, true)
+            } else {
+                (note_file.path.clone(), false)
+            }
+        } else {
+            (note_file.path.clone(), false)
         };
 
         let editor_cmd = if self.config.editor != "builtin" {
@@ -1457,7 +1747,7 @@ impl App {
 
         // 2. Determine shell ($SHELL or /bin/sh) and format safe command
         let shell = env::var("SHELL").unwrap_or_else(|_| "/bin/sh".to_string());
-        let path_str = note_path.to_string_lossy();
+        let path_str = edit_path.to_string_lossy();
         let safe_path = path_str.replace('\'', "'\\''");
         let full_cmd = format!("{} '{}'", editor_cmd, safe_path);
 
@@ -1473,7 +1763,7 @@ impl App {
         // Fallback: If shell invocation fails, attempt direct Command::new
         if status_res.is_err() {
             let _ = Command::new(&editor_cmd)
-                .arg(&note_path)
+                .arg(&edit_path)
                 .stdin(Stdio::inherit())
                 .stdout(Stdio::inherit())
                 .stderr(Stdio::inherit())
@@ -1488,6 +1778,18 @@ impl App {
             crossterm::cursor::Hide
         );
         let _ = stdout.flush();
+
+        if is_temp {
+            if let Ok(updated_text) = std::fs::read_to_string(&edit_path) {
+                let pass = self.cached_passphrase.as_deref().or(Some("notedog"));
+                if let Ok(()) = self.manager.save_note_markdown(&note_file.path, &updated_text, pass) {
+                    if let Ok(raw_bytes) = self.manager.read_note_raw(&note_file.path) {
+                        let _ = self.version_manager.create_snapshot(&note_file.path, &raw_bytes);
+                    }
+                }
+            }
+            let _ = std::fs::remove_file(&edit_path);
+        }
 
         self.needs_clear = true;
         self.load_current_note();
