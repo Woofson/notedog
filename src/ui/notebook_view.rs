@@ -79,7 +79,7 @@ pub fn render_navigation_sidebar(
         .enumerate()
         .map(|(i, nb)| {
             let is_selected = i == active_nb;
-            let icon = icons.get_icon_for(&nb.name, &icons.notebook);
+            let icon = icons.get_icon_for(&nb.name, crate::config::IconType::Notebook, &icons.notebook);
             let style = theme.notebook_item_style(is_selected);
             let icon_style = theme.notebook_icon_style(is_selected);
             let bg_style = theme.notebook_item_bg_style(is_selected);
@@ -114,7 +114,7 @@ pub fn render_navigation_sidebar(
             .enumerate()
             .map(|(i, sec)| {
                 let is_selected = i == active_sec;
-                let icon = icons.get_icon_for(&sec.name, &icons.section);
+                let icon = icons.get_icon_for(&sec.name, crate::config::IconType::Section, &icons.section);
                 let style = theme.section_item_style(is_selected);
                 let icon_style = theme.section_icon_style(is_selected);
                 let bg_style = theme.section_item_bg_style(is_selected);
@@ -152,7 +152,7 @@ pub fn render_navigation_sidebar(
             .map(|(i, note)| {
                 let is_selected = i == active_note;
                 let default_ic = if note.is_encrypted { &icons.encrypted_note } else { &icons.note };
-                let icon = icons.get_icon_for(&note.name, default_ic);
+                let icon = icons.get_icon_for(&note.name, crate::config::IconType::Note, default_ic);
                 let name_style = if note.is_encrypted && !is_selected {
                     Style::default().fg(theme.encrypted_tag).add_modifier(Modifier::BOLD)
                 } else {

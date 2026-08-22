@@ -69,6 +69,12 @@ show_main_title = false     # Set true to show note title at the top of the main
 # 🎨 CUSTOMIZABLE SECTION ICONS & PRESET REGEX MATCHING RULES
 # Note: Color Emojis (📚 📂 📄 🔒) use your terminal's fixed font color artwork.
 # For full custom icon coloring via `notebook_icon_fg`, use Nerd Fonts symbols below!
+#
+# Rules support optional `target` scoping:
+# target = "notebook"  -> only applies to notebooks
+# target = "section"   -> only applies to sections
+# target = "note"      -> only applies to notes
+# (omitted / "all")   -> applies to all three as general fallback
 [icons]
 # Standard Color Emojis:
 notebook = "📚 "
@@ -91,10 +97,17 @@ editor = "✏️ "
 pattern = "(?i).*(todo|tasks|tasklist|checklist|to-do).*"
 icon = "✅ "
 
-# 🛒 SHOPPING & GROCERY LIST PRESETS
+# 🛒 SHOPPING & GROCERY LIST PRESETS (General rule)
 [[icons.rules]]
 pattern = "(?i).*(shopping|grocery|groceries|store|buy|buy-list).*"
 icon = "🛒 "
+
+# 🥦 SCOPED EXAMPLE: Specific icon for a note named groceries vs section
+# [[icons.rules]]
+# pattern = "(?i).*groceries.*"
+# target = "note"
+# icon = "🥦 "
+
 
 # 💡 IDEAS & BRAINSTORMING
 [[icons.rules]]

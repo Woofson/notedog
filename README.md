@@ -117,6 +117,7 @@ notes           = "NOTES"     # Title text for Notes pane
 show_main_title = false       # Show/hide redundant note title header on the main viewer pane
 
 # 🎨 CUSTOMIZABLE ICONS & REGEX PATTERN RULES
+# Rules support optional `target = "notebook"` | `"section"` | `"note"` scoping
 [icons]
 notebook       = "📚 "
 section        = "📂 "
@@ -129,9 +130,16 @@ editor         = "✏️ "
 pattern = "(?i).*(todo|tasks|tasklist|checklist|to-do).*"
 icon = "✅ "
 
+# General rule for groceries:
 [[icons.rules]]
 pattern = "(?i).*(shopping|grocery|groceries|store|buy|buy-list).*"
 icon = "🛒 "
+
+# Specific icon only when a Note is named groceries:
+# [[icons.rules]]
+# pattern = "(?i).*groceries.*"
+# target = "note"
+# icon = "🥦 "
 
 # 📝 CUSTOM NOTE TEMPLATES (OPTIONAL)
 [[templates]]

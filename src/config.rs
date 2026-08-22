@@ -18,10 +18,32 @@ fn default_encrypted_note_icon() -> String { "🔒 ".to_string() }
 fn default_preview_icon() -> String { "📖 ".to_string() }
 fn default_editor_icon() -> String { "✏️ ".to_string() }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum IconType {
+    Notebook,
+    Section,
+    Note,
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct IconRule {
     pub pattern: String,
     pub icon: String,
+    #[serde(default, alias = "scope", alias = "type", alias = "applies_to")]
+    pub target: Option<String>,
+}
+
+impl IconRule {
+    pub fn matches(&self, name: &str) -> bool {
+        if let Ok(re) = regex::Regex::new(&self.pattern) {
+            if re.is_match(name) {
+                return true;
+            }
+        } else if name.to_lowercase().contains(&self.pattern.to_lowercase()) {
+            return true;
+        }
+        false
+    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -43,16 +65,36 @@ pub struct IconConfig {
 }
 
 impl IconConfig {
-    pub fn get_icon_for(&self, name: &str, default_fallback: &str) -> String {
+    pub fn get_icon_for(&self, name: &str, item_type: IconType, default_fallback: &str) -> String {
+        // 1. Check specific target rules first (e.g. target = "section", "note", "notebook")
         for rule in &self.rules {
-            if let Ok(re) = regex::Regex::new(&rule.pattern) {
-                if re.is_match(name) {
+            if let Some(target) = &rule.target {
+                let t = target.trim().to_lowercase();
+                let matches_target = match item_type {
+                    IconType::Notebook => t == "notebook" || t == "notebooks" || t == "nb",
+                    IconType::Section => t == "section" || t == "sections" || t == "sec",
+                    IconType::Note => t == "note" || t == "notes",
+                };
+                if matches_target && rule.matches(name) {
                     return rule.icon.clone();
                 }
-            } else if name.to_lowercase().contains(&rule.pattern.to_lowercase()) {
+            }
+        }
+
+        // 2. Check generic rules (target is None or "all")
+        for rule in &self.rules {
+            let is_generic = match &rule.target {
+                None => true,
+                Some(t) => {
+                    let s = t.trim().to_lowercase();
+                    s.is_empty() || s == "all" || s == "*" || s == "any"
+                }
+            };
+            if is_generic && rule.matches(name) {
                 return rule.icon.clone();
             }
         }
+
         default_fallback.to_string()
     }
 }
@@ -67,15 +109,15 @@ impl Default for IconConfig {
             preview: default_preview_icon(),
             editor: default_editor_icon(),
             rules: vec![
-                IconRule { pattern: "(?i).*(todo|tasks|tasklist|checklist|to-do).*".to_string(), icon: "✅ ".to_string() },
-                IconRule { pattern: "(?i).*(shopping|grocery|groceries|store|buy|buy-list).*".to_string(), icon: "🛒 ".to_string() },
-                IconRule { pattern: "(?i).*(idea|ideas|brainstorm|concept).*".to_string(), icon: "💡 ".to_string() },
-                IconRule { pattern: "(?i).*(work|job|office|project|sprint).*".to_string(), icon: "💼 ".to_string() },
-                IconRule { pattern: "(?i).*(personal|journal|diary|daily).*".to_string(), icon: "📔 ".to_string() },
-                IconRule { pattern: "(?i).*(finance|budget|money|expense|expenses|bank).*".to_string(), icon: "💰 ".to_string() },
-                IconRule { pattern: "(?i).*(secret|secrets|passwords|vault|private).*".to_string(), icon: "🔒 ".to_string() },
-                IconRule { pattern: "(?i).*(meeting|meetings|call|agenda|standup).*".to_string(), icon: "📅 ".to_string() },
-                IconRule { pattern: "(?i).*(welcome|intro|getting-started|readme).*".to_string(), icon: "👋 ".to_string() },
+                IconRule { pattern: "(?i).*(todo|tasks|tasklist|checklist|to-do).*".to_string(), icon: "✅ ".to_string(), target: None },
+                IconRule { pattern: "(?i).*(shopping|grocery|groceries|store|buy|buy-list).*".to_string(), icon: "🛒 ".to_string(), target: None },
+                IconRule { pattern: "(?i).*(idea|ideas|brainstorm|concept).*".to_string(), icon: "💡 ".to_string(), target: None },
+                IconRule { pattern: "(?i).*(work|job|office|project|sprint).*".to_string(), icon: "💼 ".to_string(), target: None },
+                IconRule { pattern: "(?i).*(personal|journal|diary|daily).*".to_string(), icon: "📔 ".to_string(), target: None },
+                IconRule { pattern: "(?i).*(finance|budget|money|expense|expenses|bank).*".to_string(), icon: "💰 ".to_string(), target: None },
+                IconRule { pattern: "(?i).*(secret|secrets|passwords|vault|private).*".to_string(), icon: "🔒 ".to_string(), target: None },
+                IconRule { pattern: "(?i).*(meeting|meetings|call|agenda|standup).*".to_string(), icon: "📅 ".to_string(), target: None },
+                IconRule { pattern: "(?i).*(welcome|intro|getting-started|readme).*".to_string(), icon: "👋 ".to_string(), target: None },
             ],
         }
     }
@@ -497,6 +539,73 @@ mod tests {
         assert_eq!(cfg.titles.notes, "My Pages");
         assert_eq!(cfg.titles.show_main_title, true);
     }
+
+    #[test]
+    fn test_scoped_icon_rules() {
+        let toml_str = r#"
+            note_folder = "~/Notes"
+            editor = "builtin"
+            secrets_file = "~/.config/notedog/secrets.toml"
+            transparent_background = true
+            show_help_bar = true
+            word_wrap = true
+            default_notebook = "Personal"
+
+            [icons]
+            notebook = "📚 "
+            section = "📂 "
+            note = "📄 "
+
+            [[icons.rules]]
+            pattern = "(?i).*groceries.*"
+            target = "notebook"
+            icon = "🏢 "
+
+            [[icons.rules]]
+            pattern = "(?i).*groceries.*"
+            target = "section"
+            icon = "🛒 "
+
+            [[icons.rules]]
+            pattern = "(?i).*groceries.*"
+            target = "note"
+            icon = "🥦 "
+        "#;
+        let cfg: Config = toml::from_str(toml_str).expect("failed to deserialize config");
+        assert_eq!(cfg.icons.get_icon_for("Groceries", IconType::Notebook, &cfg.icons.notebook), "🏢 ");
+        assert_eq!(cfg.icons.get_icon_for("Groceries", IconType::Section, &cfg.icons.section), "🛒 ");
+        assert_eq!(cfg.icons.get_icon_for("Groceries", IconType::Note, &cfg.icons.note), "🥦 ");
+
+        // Also test generic fallback rule if target is not specified
+        let toml_str_generic = r#"
+            note_folder = "~/Notes"
+            editor = "builtin"
+            secrets_file = "~/.config/notedog/secrets.toml"
+            transparent_background = true
+            show_help_bar = true
+            word_wrap = true
+            default_notebook = "Personal"
+
+            [icons]
+            notebook = "📚 "
+            section = "📂 "
+            note = "📄 "
+
+            [[icons.rules]]
+            pattern = "(?i).*groceries.*"
+            target = "section"
+            icon = "🛒 "
+
+            [[icons.rules]]
+            pattern = "(?i).*groceries.*"
+            icon = "📝 "
+        "#;
+        let cfg_generic: Config = toml::from_str(toml_str_generic).expect("failed to deserialize config");
+        assert_eq!(cfg_generic.icons.get_icon_for("Groceries", IconType::Section, &cfg_generic.icons.section), "🛒 ");
+        assert_eq!(cfg_generic.icons.get_icon_for("Groceries", IconType::Notebook, &cfg_generic.icons.notebook), "📝 ");
+        assert_eq!(cfg_generic.icons.get_icon_for("Groceries", IconType::Note, &cfg_generic.icons.note), "📝 ");
+    }
 }
+
 
 
