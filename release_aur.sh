@@ -13,9 +13,10 @@ echo "📄 Copying PKGBUILD and .SRCINFO..."
 cp "$REPO_DIR/PKGBUILD" "$REPO_DIR/.SRCINFO" "$TMP_DIR/"
 
 cd "$TMP_DIR"
+git branch -m master 2>/dev/null || true
 git add PKGBUILD .SRCINFO
-git commit -m "Update notedog to 0.5.0"
-git push origin master
+git commit -m "Update notedog to 0.5.0" || true
+git push -u origin master
 
 echo "🎉 NoteDog v0.5.0 successfully published to AUR!"
 rm -rf "$TMP_DIR"

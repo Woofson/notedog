@@ -168,8 +168,18 @@ note_icon_selected_fg         = "#36A3D9"
 
 ---
 
-## 📦 Building & Running
+## 📦 Installation & Running
 
+### Arch Linux (AUR)
+```bash
+# Using yay
+yay -S notedog
+
+# Using paru
+paru -S notedog
+```
+
+### Building from Source
 ```bash
 # Clone repository
 git clone https://github.com/Woofson/notedog.git
