@@ -101,6 +101,8 @@ transparent_background = true
 show_help_bar = true
 word_wrap = true
 default_notebook = "Personal"
+spawn_examples   = true        # Set false to disable spawning .example files in config dir
+spawn_themes     = true        # Set false to disable auto-populating ~/.config/notedog/themes/
 
 # 📐 RESIZABLE LAYOUT DIMENSIONS
 [layout]

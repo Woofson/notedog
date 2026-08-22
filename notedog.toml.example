@@ -25,6 +25,14 @@ word_wrap = true
 # Default active notebook on launch
 default_notebook = "Personal"
 
+# Auto-generate example configs (notedog.toml.example, theme.toml.example).
+# Set false to disable NoteDog from re-spawning .example files in your config folder.
+spawn_examples = true
+
+# Auto-populate ~/.config/notedog/themes/ with built-in theme presets on startup.
+# Set false if you manage your own themes directory and don't want built-in files auto-spawned.
+spawn_themes = true
+
 # 🎨 ACTIVE THEME SELECTION
 # Themes are stored as separate .toml files in ~/.config/notedog/themes/
 # To change themes, simply change this entry to any theme file name:

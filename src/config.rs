@@ -210,6 +210,9 @@ impl Default for TitlesConfig {
     }
 }
 
+fn default_spawn_examples() -> bool { true }
+fn default_spawn_themes() -> bool { true }
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Config {
     pub note_folder: String,
@@ -219,6 +222,12 @@ pub struct Config {
     pub show_help_bar: bool,
     pub word_wrap: bool,
     pub default_notebook: String,
+
+    #[serde(default = "default_spawn_examples", alias = "spawn_example_files", alias = "generate_examples")]
+    pub spawn_examples: bool,
+
+    #[serde(default = "default_spawn_themes", alias = "spawn_builtin_themes", alias = "auto_create_themes")]
+    pub spawn_themes: bool,
 
     #[serde(default)]
     pub theme: ThemeSetting,
@@ -266,6 +275,8 @@ impl Default for Config {
             show_help_bar: true,
             word_wrap: true,
             default_notebook: "Personal".to_string(),
+            spawn_examples: default_spawn_examples(),
+            spawn_themes: default_spawn_themes(),
             theme: ThemeSetting::default(),
             default_note_prefix: default_note_prefix(),
             default_note_postfix: default_note_postfix(),
@@ -407,20 +418,14 @@ impl Config {
             eprintln!("Warning: could not create config dir {:?}: {}", config_dir, e);
         }
 
-        // Initialize ~/.config/notedog/themes/ with all built-in themes!
-        crate::theme::init_themes_dir(&config_dir);
-
-        if !example_cfg_path.exists() {
-            let _ = fs::write(&example_cfg_path, include_str!("../notedog.toml.example"));
-        }
-        if !example_theme_path.exists() {
-            let _ = fs::write(&example_theme_path, include_str!("../theme.toml.example"));
-        }
-
-        let target_path = if toml_path.exists() {
-            toml_path
+        let (cfg, target_path) = if toml_path.exists() {
+            let content = fs::read_to_string(&toml_path).unwrap_or_default();
+            let parsed = toml::from_str::<Config>(&content).unwrap_or_default();
+            (parsed, toml_path)
         } else if conf_path.exists() {
-            conf_path
+            let content = fs::read_to_string(&conf_path).unwrap_or_default();
+            let parsed = toml::from_str::<Config>(&content).unwrap_or_default();
+            (parsed, conf_path)
         } else {
             let default_cfg = Config::default();
             let content = toml::to_string_pretty(&default_cfg).unwrap_or_default();
@@ -432,16 +437,25 @@ impl Config {
 "#;
             let full_content = format!("{}{}", comment_header, content);
             let _ = fs::write(&toml_path, full_content);
-            toml_path
+            (default_cfg, toml_path)
         };
 
-        if let Ok(content) = fs::read_to_string(&target_path) {
-            if let Ok(cfg) = toml::from_str::<Config>(&content) {
-                return (cfg, target_path);
+        // If spawn_themes is enabled (default: true), populate ~/.config/notedog/themes/ with built-in presets
+        if cfg.spawn_themes {
+            crate::theme::init_themes_dir(&config_dir);
+        }
+
+        // If spawn_examples is enabled (default: true), write .example files if they do not exist
+        if cfg.spawn_examples {
+            if !example_cfg_path.exists() {
+                let _ = fs::write(&example_cfg_path, include_str!("../notedog.toml.example"));
+            }
+            if !example_theme_path.exists() {
+                let _ = fs::write(&example_theme_path, include_str!("../theme.toml.example"));
             }
         }
 
-        (Config::default(), target_path)
+        (cfg, target_path)
     }
 
     pub fn resolved_note_folder(&self) -> PathBuf {
@@ -605,7 +619,30 @@ mod tests {
         assert_eq!(cfg_generic.icons.get_icon_for("Groceries", IconType::Notebook, &cfg_generic.icons.notebook), "📝 ");
         assert_eq!(cfg_generic.icons.get_icon_for("Groceries", IconType::Note, &cfg_generic.icons.note), "📝 ");
     }
+
+    #[test]
+    fn test_config_spawn_examples_and_themes() {
+        let toml_str = r#"
+            note_folder = "~/Notes"
+            editor = "builtin"
+            secrets_file = "~/.config/notedog/secrets.toml"
+            transparent_background = true
+            show_help_bar = true
+            word_wrap = true
+            default_notebook = "Personal"
+            spawn_examples = false
+            spawn_themes = false
+        "#;
+        let cfg: Config = toml::from_str(toml_str).expect("failed to deserialize config");
+        assert_eq!(cfg.spawn_examples, false);
+        assert_eq!(cfg.spawn_themes, false);
+
+        let default_cfg = Config::default();
+        assert_eq!(default_cfg.spawn_examples, true);
+        assert_eq!(default_cfg.spawn_themes, true);
+    }
 }
+
 
 
 
