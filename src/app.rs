@@ -188,19 +188,23 @@ impl App {
         if let Ok(raw_bytes) = self.manager.read_note_raw(&note_file.path) {
             let _ = self.version_manager.create_snapshot(&note_file.path, &raw_bytes);
             if note_file.is_encrypted || is_encrypted_data(&raw_bytes) {
+                let mut decrypted_text = None;
+
                 if let Some(pass) = &self.cached_passphrase {
-                    match decrypt_note(&raw_bytes, pass) {
-                        Ok(decrypted) => {
-                            self.current_note_content = decrypted.clone();
-                            self.editor = Editor::from_string(&decrypted);
-                            self.status_message = "Unlocked encrypted note".to_string();
-                        }
-                        Err(_) => {
-                            self.current_note_content = "🔒 [Encrypted Note - Enter Passphrase to view]\nPress Enter to unlock.".to_string();
-                            self.editor = Editor::from_string(&self.current_note_content);
-                            self.status_message = "Passphrase required".to_string();
-                        }
+                    if let Ok(dec) = decrypt_note(&raw_bytes, pass) {
+                        decrypted_text = Some(dec);
                     }
+                }
+                if decrypted_text.is_none() {
+                    if let Ok(dec) = decrypt_note(&raw_bytes, "notedog") {
+                        decrypted_text = Some(dec);
+                    }
+                }
+
+                if let Some(decrypted) = decrypted_text {
+                    self.current_note_content = decrypted.clone();
+                    self.editor = Editor::from_string(&decrypted);
+                    self.status_message = "Unlocked encrypted note".to_string();
                 } else {
                     self.current_note_content = "🔒 [Encrypted Note - Enter Passphrase to view]\nPress Enter to unlock.".to_string();
                     self.editor = Editor::from_string(&self.current_note_content);
@@ -958,9 +962,19 @@ impl App {
 
         match action {
             PendingCryptoAction::UnlockNote => {
-                if let Some(note) = self.current_note_file() {
+                if let Some(note) = self.current_note_file().cloned() {
                     if let Ok(raw) = self.manager.read_note_raw(&note.path) {
-                        match decrypt_note(&raw, passphrase) {
+                        let mut decrypted = decrypt_note(&raw, passphrase);
+                        if decrypted.is_err() && passphrase != "notedog" {
+                            if let Ok(starter_text) = decrypt_note(&raw, "notedog") {
+                                if let Ok(re_enc) = encrypt_note(&starter_text, passphrase) {
+                                    let _ = self.manager.save_note_raw(&note.path, &re_enc);
+                                }
+                                decrypted = Ok(starter_text);
+                            }
+                        }
+
+                        match decrypted {
                             Ok(text) => {
                                 self.cached_passphrase = Some(passphrase.to_string());
                                 self.current_note_content = text.clone();
@@ -1031,7 +1045,12 @@ impl App {
                 let note_title = self.current_note_title();
                 if let Some(note) = self.current_note_file().cloned() {
                     if let Ok(raw) = self.manager.read_note_raw(&note.path) {
-                        if let Ok(plaintext) = decrypt_note(&raw, passphrase) {
+                        let mut decrypted = decrypt_note(&raw, passphrase);
+                        if decrypted.is_err() && passphrase != "notedog" {
+                            decrypted = decrypt_note(&raw, "notedog");
+                        }
+
+                        if let Ok(plaintext) = decrypted {
                             let dec_path = note.path.with_extension("").with_extension("md");
                             let _ = self.manager.save_note_markdown(&dec_path, &plaintext, None);
                             if note.path != dec_path {
@@ -1078,7 +1097,7 @@ impl App {
                                 error: Some("Passphrases do not match! Please try again.".to_string()),
                             };
                         } else {
-                            match self.manager.encrypt_section(self.active_notebook_idx, self.active_section_idx, &fp) {
+                            match self.manager.encrypt_section(self.active_notebook_idx, self.active_section_idx, &fp, self.cached_passphrase.as_deref()) {
                                 Ok(count) => {
                                     self.cached_passphrase = Some(fp);
                                     self.load_current_note();
@@ -1138,7 +1157,7 @@ impl App {
                                 error: Some("Passphrases do not match! Please try again.".to_string()),
                             };
                         } else {
-                            match self.manager.encrypt_notebook(self.active_notebook_idx, &fp) {
+                            match self.manager.encrypt_notebook(self.active_notebook_idx, &fp, self.cached_passphrase.as_deref()) {
                                 Ok(count) => {
                                     self.cached_passphrase = Some(fp);
                                     self.load_current_note();

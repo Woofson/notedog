@@ -195,75 +195,143 @@ impl NoteManager {
         Err(io::Error::new(io::ErrorKind::NotFound, "Notebook or Section not found"))
     }
 
-    pub fn encrypt_section(&mut self, nb_idx: usize, sec_idx: usize, passphrase: &str) -> io::Result<usize> {
-        let (sec_path, notes_to_encrypt) = {
-            let nb = self.notebooks.get(nb_idx).ok_or_else(|| io::Error::new(io::ErrorKind::NotFound, "Notebook not found"))?;
-            let sec = nb.sections.get(sec_idx).ok_or_else(|| io::Error::new(io::ErrorKind::NotFound, "Section not found"))?;
-            (sec.path.clone(), sec.notes.clone())
-        };
-
+    fn encrypt_section_dir(sec_path: &Path, passphrase: &str, cached_pass: Option<&str>) -> io::Result<usize> {
         let mut count = 0;
-        for note in notes_to_encrypt {
-            if !note.is_encrypted {
-                let content = fs::read_to_string(&note.path)?;
-                let enc_bytes = crate::crypto::encrypt_note(&content, passphrase)
-                    .map_err(|e| io::Error::new(io::ErrorKind::Other, e.to_string()))?;
-                let enc_path = note.path.with_extension("md.enc");
-                fs::write(&enc_path, enc_bytes)?;
-                if note.path != enc_path {
-                    let _ = fs::remove_file(&note.path);
+        if let Ok(entries) = fs::read_dir(sec_path) {
+            for entry in entries.filter_map(|e| e.ok()) {
+                let path = entry.path();
+                if path.is_file() {
+                    let filename = path.file_name().unwrap_or_default().to_string_lossy().to_string();
+                    if filename.ends_with(".md") && !filename.starts_with('.') {
+                        if let Ok(content) = fs::read_to_string(&path) {
+                            if let Ok(enc_bytes) = crate::crypto::encrypt_note(&content, passphrase) {
+                                let enc_path = path.with_extension("md.enc");
+                                if fs::write(&enc_path, enc_bytes).is_ok() {
+                                    let _ = fs::remove_file(&path);
+                                    count += 1;
+                                }
+                            }
+                        }
+                    } else if filename.ends_with(".md.enc") && !filename.starts_with('.') {
+                        if let Ok(raw) = fs::read(&path) {
+                            if crate::crypto::decrypt_note(&raw, passphrase).is_ok() {
+                                count += 1;
+                            } else {
+                                let mut decrypted_text = None;
+                                if let Some(cp) = cached_pass {
+                                    if let Ok(text) = crate::crypto::decrypt_note(&raw, cp) {
+                                        decrypted_text = Some(text);
+                                    }
+                                }
+                                if decrypted_text.is_none() {
+                                    if let Ok(text) = crate::crypto::decrypt_note(&raw, "notedog") {
+                                        decrypted_text = Some(text);
+                                    }
+                                }
+                                if let Some(text) = decrypted_text {
+                                    if let Ok(enc_bytes) = crate::crypto::encrypt_note(&text, passphrase) {
+                                        let _ = fs::write(&path, enc_bytes);
+                                        count += 1;
+                                    }
+                                }
+                            }
+                        }
+                    }
                 }
-                count += 1;
             }
         }
 
         let marker = sec_path.join(".encrypted");
         let _ = fs::write(marker, b"NOTEDOG_SECTION_ENC");
+        Ok(count)
+    }
 
+    fn decrypt_section_dir(sec_path: &Path, passphrase: &str) -> io::Result<usize> {
+        let mut decrypted_count = 0;
+        let mut failed_count = 0;
+
+        if let Ok(entries) = fs::read_dir(sec_path) {
+            for entry in entries.filter_map(|e| e.ok()) {
+                let path = entry.path();
+                if path.is_file() {
+                    let filename = path.file_name().unwrap_or_default().to_string_lossy().to_string();
+                    if filename.ends_with(".md.enc") && !filename.starts_with('.') {
+                        if let Ok(raw) = fs::read(&path) {
+                            let mut decrypted = crate::crypto::decrypt_note(&raw, passphrase);
+                            if decrypted.is_err() && passphrase != "notedog" {
+                                decrypted = crate::crypto::decrypt_note(&raw, "notedog");
+                            }
+
+                            match decrypted {
+                                Ok(plaintext) => {
+                                    let dec_path = path.with_extension("").with_extension("md");
+                                    if fs::write(&dec_path, plaintext).is_ok() {
+                                        let _ = fs::remove_file(&path);
+                                        decrypted_count += 1;
+                                    }
+                                }
+                                Err(_) => {
+                                    failed_count += 1;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        if failed_count == 0 {
+            let marker = sec_path.join(".encrypted");
+            if marker.exists() {
+                let _ = fs::remove_file(marker);
+            }
+        }
+
+        if decrypted_count == 0 && failed_count > 0 {
+            return Err(io::Error::new(io::ErrorKind::Other, "Incorrect passphrase for encrypted notes in section"));
+        }
+
+        Ok(decrypted_count)
+    }
+
+    pub fn encrypt_section(&mut self, nb_idx: usize, sec_idx: usize, passphrase: &str, cached_pass: Option<&str>) -> io::Result<usize> {
+        let sec_path = {
+            let nb = self.notebooks.get(nb_idx).ok_or_else(|| io::Error::new(io::ErrorKind::NotFound, "Notebook not found"))?;
+            let sec = nb.sections.get(sec_idx).ok_or_else(|| io::Error::new(io::ErrorKind::NotFound, "Section not found"))?;
+            sec.path.clone()
+        };
+
+        let count = Self::encrypt_section_dir(&sec_path, passphrase, cached_pass)?;
         self.reload();
         Ok(count)
     }
 
     pub fn decrypt_section(&mut self, nb_idx: usize, sec_idx: usize, passphrase: &str) -> io::Result<usize> {
-        let (sec_path, notes_to_decrypt) = {
+        let sec_path = {
             let nb = self.notebooks.get(nb_idx).ok_or_else(|| io::Error::new(io::ErrorKind::NotFound, "Notebook not found"))?;
             let sec = nb.sections.get(sec_idx).ok_or_else(|| io::Error::new(io::ErrorKind::NotFound, "Section not found"))?;
-            (sec.path.clone(), sec.notes.clone())
+            sec.path.clone()
         };
 
-        let mut count = 0;
-        for note in notes_to_decrypt {
-            if note.is_encrypted {
-                let raw = fs::read(&note.path)?;
-                let plaintext = crate::crypto::decrypt_note(&raw, passphrase)
-                    .map_err(|e| io::Error::new(io::ErrorKind::Other, e.to_string()))?;
-                let dec_path = note.path.with_extension("").with_extension("md");
-                fs::write(&dec_path, plaintext)?;
-                if note.path != dec_path {
-                    let _ = fs::remove_file(&note.path);
-                }
-                count += 1;
-            }
-        }
-
-        let marker = sec_path.join(".encrypted");
-        if marker.exists() {
-            let _ = fs::remove_file(marker);
-        }
-
+        let count = Self::decrypt_section_dir(&sec_path, passphrase)?;
         self.reload();
         Ok(count)
     }
 
-    pub fn encrypt_notebook(&mut self, nb_idx: usize, passphrase: &str) -> io::Result<usize> {
-        let (nb_path, sections_count) = {
+    pub fn encrypt_notebook(&mut self, nb_idx: usize, passphrase: &str, cached_pass: Option<&str>) -> io::Result<usize> {
+        let nb_path = {
             let nb = self.notebooks.get(nb_idx).ok_or_else(|| io::Error::new(io::ErrorKind::NotFound, "Notebook not found"))?;
-            (nb.path.clone(), nb.sections.len())
+            nb.path.clone()
         };
 
         let mut total_count = 0;
-        for s_idx in 0..sections_count {
-            total_count += self.encrypt_section(nb_idx, s_idx, passphrase)?;
+        if let Ok(entries) = fs::read_dir(&nb_path) {
+            for entry in entries.filter_map(|e| e.ok()) {
+                let path = entry.path();
+                if path.is_dir() && !path.file_name().unwrap_or_default().to_string_lossy().starts_with('.') {
+                    total_count += Self::encrypt_section_dir(&path, passphrase, cached_pass)?;
+                }
+            }
         }
 
         let marker = nb_path.join(".encrypted");
@@ -274,14 +342,21 @@ impl NoteManager {
     }
 
     pub fn decrypt_notebook(&mut self, nb_idx: usize, passphrase: &str) -> io::Result<usize> {
-        let (nb_path, sections_count) = {
+        let nb_path = {
             let nb = self.notebooks.get(nb_idx).ok_or_else(|| io::Error::new(io::ErrorKind::NotFound, "Notebook not found"))?;
-            (nb.path.clone(), nb.sections.len())
+            nb.path.clone()
         };
 
         let mut total_count = 0;
-        for s_idx in 0..sections_count {
-            total_count += self.decrypt_section(nb_idx, s_idx, passphrase)?;
+        if let Ok(entries) = fs::read_dir(&nb_path) {
+            for entry in entries.filter_map(|e| e.ok()) {
+                let path = entry.path();
+                if path.is_dir() && !path.file_name().unwrap_or_default().to_string_lossy().starts_with('.') {
+                    if let Ok(cnt) = Self::decrypt_section_dir(&path, passphrase) {
+                        total_count += cnt;
+                    }
+                }
+            }
         }
 
         let marker = nb_path.join(".encrypted");
@@ -605,7 +680,7 @@ mod tests {
         assert!(!manager.notebooks[nb_idx].sections[sec_idx].is_encrypted);
 
         // Encrypt section
-        let count = manager.encrypt_section(nb_idx, sec_idx, "Pass123").unwrap();
+        let count = manager.encrypt_section(nb_idx, sec_idx, "Pass123", None).unwrap();
         assert_eq!(count, 2);
 
         let nb_idx = manager.notebooks.iter().position(|n| n.name == "Vault").unwrap();
@@ -623,7 +698,7 @@ mod tests {
         assert!(manager.notebooks[nb_idx].sections[sec_idx].notes.iter().all(|n| !n.is_encrypted));
 
         // Encrypt entire notebook
-        let count = manager.encrypt_notebook(nb_idx, "Pass123").unwrap();
+        let count = manager.encrypt_notebook(nb_idx, "Pass123", None).unwrap();
         assert!(count >= 2);
 
         let nb_idx = manager.notebooks.iter().position(|n| n.name == "Vault").unwrap();
@@ -656,7 +731,7 @@ mod tests {
         let sec_idx = manager.notebooks[nb_idx].sections.iter().position(|s| s.name == "TopSecret").unwrap();
 
         // Encrypt section with OldPass
-        manager.encrypt_section(nb_idx, sec_idx, "OldPass").unwrap();
+        manager.encrypt_section(nb_idx, sec_idx, "OldPass", None).unwrap();
         let nb_idx = manager.notebooks.iter().position(|n| n.name == "SecuredVault").unwrap();
         let sec_idx = manager.notebooks[nb_idx].sections.iter().position(|s| s.name == "TopSecret").unwrap();
         let note_path = manager.notebooks[nb_idx].sections[sec_idx].notes[0].path.clone();
@@ -678,6 +753,59 @@ mod tests {
         let raw = manager.read_note_raw(&note_path).unwrap();
         assert!(crate::crypto::decrypt_note(&raw, "BrandNewPass").is_err());
         assert_eq!(crate::crypto::decrypt_note(&raw, "FinalPass").unwrap(), "Confidential message");
+
+        let _ = fs::remove_dir_all(&temp_dir);
+    }
+
+    #[test]
+    fn test_encrypted_notebook_mixed_notes_and_decryption() {
+        let temp_dir = std::env::temp_dir().join("notedog_mixed_nb_test_dir");
+        let _ = fs::remove_dir_all(&temp_dir);
+
+        let mut manager = NoteManager::new(temp_dir.clone());
+        manager.create_notebook("Workspace").unwrap();
+        let nb_idx = manager.notebooks.iter().position(|n| n.name == "Workspace").unwrap();
+
+        manager.create_section(nb_idx, "Team").unwrap();
+        let sec_idx = manager.notebooks[nb_idx].sections.iter().position(|s| s.name == "Team").unwrap();
+
+        // Add 1 plaintext note and 1 note encrypted with "notedog"
+        manager.create_note(nb_idx, sec_idx, "PlainNote", false, Some("Plaintext data")).unwrap();
+        let enc_bytes = crate::crypto::encrypt_note("Secret starter data", "notedog").unwrap();
+        let enc_path = manager.notebooks[nb_idx].sections[sec_idx].path.join("StarterSecret.md.enc");
+        fs::write(enc_path, enc_bytes).unwrap();
+        manager.reload();
+
+        let nb_idx = manager.notebooks.iter().position(|n| n.name == "Workspace").unwrap();
+        let sec_idx = manager.notebooks[nb_idx].sections.iter().position(|s| s.name == "Team").unwrap();
+        assert_eq!(manager.notebooks[nb_idx].sections[sec_idx].notes.len(), 2);
+
+        // Encrypt the entire notebook with "MyMasterPass"
+        let count = manager.encrypt_notebook(nb_idx, "MyMasterPass", None).unwrap();
+        assert_eq!(count, 2);
+
+        let nb_idx = manager.notebooks.iter().position(|n| n.name == "Workspace").unwrap();
+        let sec_idx = manager.notebooks[nb_idx].sections.iter().position(|s| s.name == "Team").unwrap();
+        assert!(manager.notebooks[nb_idx].is_encrypted);
+        assert!(manager.notebooks[nb_idx].sections[sec_idx].is_encrypted);
+
+        // Both notes must now be decryptable with "MyMasterPass"
+        for note in &manager.notebooks[nb_idx].sections[sec_idx].notes {
+            let raw = manager.read_note_raw(&note.path).unwrap();
+            assert!(crate::crypto::decrypt_note(&raw, "MyMasterPass").is_ok());
+        }
+
+        // Decrypt entire notebook back to plaintext with "MyMasterPass"
+        let count = manager.decrypt_notebook(nb_idx, "MyMasterPass").unwrap();
+        assert_eq!(count, 2);
+
+        let nb_idx = manager.notebooks.iter().position(|n| n.name == "Workspace").unwrap();
+        let sec_idx = manager.notebooks[nb_idx].sections.iter().position(|s| s.name == "Team").unwrap();
+        assert!(!manager.notebooks[nb_idx].is_encrypted);
+        assert!(!manager.notebooks[nb_idx].sections[sec_idx].is_encrypted);
+        for note in &manager.notebooks[nb_idx].sections[sec_idx].notes {
+            assert!(!note.is_encrypted);
+        }
 
         let _ = fs::remove_dir_all(&temp_dir);
     }
