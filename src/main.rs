@@ -24,7 +24,7 @@ use std::time::Duration;
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let args: Vec<String> = std::env::args().collect();
     if args.contains(&"--help".to_string()) || args.contains(&"-h".to_string()) {
-        println!("🐶 NoteDog v0.5.0 - OneNote & Obsidian style TUI notes app");
+        println!("🐶 NoteDog v{} - OneNote & Obsidian style TUI notes app", env!("CARGO_PKG_VERSION"));
         println!("Author: Bolt J Woofson | Repository: https://github.com/Woofson/notedog");
         println!();
         println!("USAGE:");
@@ -42,7 +42,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     }
 
     if args.contains(&"--version".to_string()) || args.contains(&"-v".to_string()) {
-        println!("NoteDog v0.5.0 (Author: Bolt J Woofson, Repository: Woofson/notedog)");
+        println!("NoteDog v{} (Author: Bolt J Woofson, Repository: Woofson/notedog)", env!("CARGO_PKG_VERSION"));
         return Ok(());
     }
 
