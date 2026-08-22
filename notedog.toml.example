@@ -22,8 +22,12 @@ show_help_bar = true
 # Default word wrap mode in Note Viewer (true / false)
 word_wrap = true
 
-# Default active notebook on launch
+# Default active notebook on launch (used as fallback when remember_last_session is false)
 default_notebook = "Personal"
+
+# Remember last active notebook, section, and note on exit & reopen (true / false)
+# When true, NoteDog automatically reopens the exact note and pane you were last working on.
+remember_last_session = true
 
 # Auto-generate example configs (notedog.toml.example, theme.toml.example).
 # Set false to disable NoteDog from re-spawning .example files in your config folder.

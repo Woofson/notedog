@@ -1,6 +1,6 @@
 [package]
 name = "notedog"
-version = "0.5.10"
+version = "0.5.11"
 edition = "2021"
 authors = ["Bolt J Woofson <bolt@boop.no>"]
 description = "A vibrant, cross-platform TUI Notes application in Rust inspired by OneNote and Obsidian"

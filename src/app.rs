@@ -1,4 +1,4 @@
-use crate::config::Config;
+use crate::config::{AppState, Config};
 use crate::crypto::{decrypt_note, encrypt_note, is_encrypted_data};
 use crate::editor::Editor;
 use crate::note_manager::{NoteFile, NoteManager};
@@ -102,16 +102,67 @@ impl App {
         let manager = NoteManager::new(note_folder.clone());
         let version_manager = VersionManager::new(&note_folder);
 
+        let mut active_notebook_idx = 0;
+        let mut active_section_idx = 0;
+        let mut active_note_idx = 0;
+        let mut focused_pane = Pane::Notes;
+
+        if config.remember_last_session {
+            let state = AppState::load();
+            if let Some(nb_name) = &state.last_notebook {
+                if let Some(idx) = manager.notebooks.iter().position(|nb| &nb.name == nb_name) {
+                    active_notebook_idx = idx;
+                } else if !config.default_notebook.is_empty() {
+                    if let Some(idx) = manager.notebooks.iter().position(|nb| nb.name.eq_ignore_ascii_case(&config.default_notebook)) {
+                        active_notebook_idx = idx;
+                    }
+                }
+            } else if !config.default_notebook.is_empty() {
+                if let Some(idx) = manager.notebooks.iter().position(|nb| nb.name.eq_ignore_ascii_case(&config.default_notebook)) {
+                    active_notebook_idx = idx;
+                }
+            }
+
+            if let Some(nb) = manager.notebooks.get(active_notebook_idx) {
+                if let Some(sec_name) = &state.last_section {
+                    if let Some(s_idx) = nb.sections.iter().position(|s| &s.name == sec_name) {
+                        active_section_idx = s_idx;
+                    }
+                }
+                if let Some(sec) = nb.sections.get(active_section_idx) {
+                    if let Some(note_name) = &state.last_note {
+                        if let Some(n_idx) = sec.notes.iter().position(|n| &n.name == note_name || &n.filename == note_name) {
+                            active_note_idx = n_idx;
+                        }
+                    }
+                }
+            }
+
+            if let Some(pane_str) = &state.focused_pane {
+                focused_pane = match pane_str.to_lowercase().as_str() {
+                    "notebooks" | "notebook" | "nb" => Pane::Notebooks,
+                    "sections" | "section" | "sec" => Pane::Sections,
+                    "notes" | "note" => Pane::Notes,
+                    "mainview" | "viewer" | "preview" | "main_view" => Pane::MainView,
+                    _ => Pane::Notes,
+                };
+            }
+        } else if !config.default_notebook.is_empty() {
+            if let Some(idx) = manager.notebooks.iter().position(|nb| nb.name.eq_ignore_ascii_case(&config.default_notebook)) {
+                active_notebook_idx = idx;
+            }
+        }
+
         let mut app = Self {
             word_wrap: config.word_wrap,
             config,
             theme,
             manager,
             version_manager,
-            active_notebook_idx: 0,
-            active_section_idx: 0,
-            active_note_idx: 0,
-            focused_pane: Pane::Notes,
+            active_notebook_idx,
+            active_section_idx,
+            active_note_idx,
+            focused_pane,
             view_mode: ViewMode::Preview,
             input_mode: InputMode::Normal,
             input_buffer: String::new(),
@@ -133,6 +184,34 @@ impl App {
 
         app.load_current_note();
         app
+    }
+
+    pub fn save_state(&self) {
+        if !self.config.remember_last_session {
+            return;
+        }
+
+        let last_notebook = self.manager.notebooks.get(self.active_notebook_idx).map(|nb| nb.name.clone());
+        let last_section = self.manager.notebooks.get(self.active_notebook_idx)
+            .and_then(|nb| nb.sections.get(self.active_section_idx))
+            .map(|sec| sec.name.clone());
+        let last_note = self.current_note_file().map(|n| n.name.clone());
+
+        let focused_pane_str = match self.focused_pane {
+            Pane::Notebooks => "notebooks",
+            Pane::Sections => "sections",
+            Pane::Notes => "notes",
+            Pane::MainView => "mainview",
+        }.to_string();
+
+        let state = AppState {
+            last_notebook,
+            last_section,
+            last_note,
+            focused_pane: Some(focused_pane_str),
+        };
+
+        state.save();
     }
 
     pub fn current_note_file(&self) -> Option<&NoteFile> {
@@ -234,6 +313,7 @@ impl App {
                 self.status_message = format!("Loaded {}", note_file.name);
             }
         }
+        self.save_state();
     }
 
     pub fn handle_key_event(&mut self, key: KeyEvent) -> bool {
@@ -665,7 +745,10 @@ impl App {
 
         // Normal Preview / Navigation keys
         match key.code {
-            KeyCode::Char('q') => return true, // Signal exit
+            KeyCode::Char('q') => {
+                self.save_state();
+                return true;
+            }
             KeyCode::Char('?') => self.show_help = true,
             KeyCode::Char('w') => {
                 self.word_wrap = !self.word_wrap;

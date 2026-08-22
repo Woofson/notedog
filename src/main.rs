@@ -82,6 +82,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut app = App::new(cfg);
 
     let run_res = run_app(&mut terminal, &mut app);
+    app.save_state();
 
     // Restore terminal
     disable_raw_mode()?;

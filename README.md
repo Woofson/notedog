@@ -1,4 +1,4 @@
-# 🐶 Notedog (v0.5.10)
+# 🐶 Notedog (v0.5.11)
 
 > A vibrant, cross-platform TUI Notes application in Rust inspired by OneNote and Obsidian. Built by **Bolt J Woofson** (`https://github.com/Woofson/notedog`). Features Smart Note Templates with interactive tickboxes, Superfile & Ayu Dark inspired UI layout, customizable regex icon rules, resizable layout dimensions, maximum per-item color & background customizability, endless file revision history, universal Markdown colors, native Mermaid flowcharts, and ChaCha20-Poly1305 + Argon2id note encryption.
 
@@ -12,6 +12,9 @@
 
 ## ✨ Features
 
+- **🧠 Smart Session Memory**:
+  - Automatically remembers the exact active **Notebook**, **Section**, and **Note** you were viewing/editing, along with your focused pane.
+  - Reopening NoteDog seamlessly picks up right where you left off.
 - **📝 Smart Note Templates with Tickboxes**:
   - Auto-populates newly created notes based on title keyword matching (e.g. `Todo` with interactive task tickboxes, `Shopping` / `Grocery` with categorized produce/dairy tickbox lists, `Meeting` / `Agenda` with action items, `Ideas`, `Work`, `Finance`).
   - Supports custom template rules in `notedog.toml` using `{{title}}` and `{{date}}` variables.

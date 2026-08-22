@@ -235,6 +235,9 @@ pub struct Config {
     pub word_wrap: bool,
     pub default_notebook: String,
 
+    #[serde(default = "default_remember_last_session", alias = "remember_session", alias = "restore_last_session")]
+    pub remember_last_session: bool,
+
     #[serde(default = "default_spawn_examples", alias = "spawn_example_files", alias = "generate_examples")]
     pub spawn_examples: bool,
 
@@ -268,6 +271,48 @@ pub struct Config {
     pub templates: Vec<TemplateRule>,
 }
 
+fn default_remember_last_session() -> bool { true }
+
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+pub struct AppState {
+    #[serde(default)]
+    pub last_notebook: Option<String>,
+    #[serde(default)]
+    pub last_section: Option<String>,
+    #[serde(default)]
+    pub last_note: Option<String>,
+    #[serde(default)]
+    pub focused_pane: Option<String>,
+}
+
+impl AppState {
+    pub fn state_file_path() -> PathBuf {
+        Config::config_dir().join("state.toml")
+    }
+
+    pub fn load() -> Self {
+        let path = Self::state_file_path();
+        if path.exists() {
+            if let Ok(content) = fs::read_to_string(&path) {
+                if let Ok(state) = toml::from_str::<AppState>(&content) {
+                    return state;
+                }
+            }
+        }
+        Self::default()
+    }
+
+    pub fn save(&self) {
+        let path = Self::state_file_path();
+        if let Some(parent) = path.parent() {
+            let _ = fs::create_dir_all(parent);
+        }
+        if let Ok(content) = toml::to_string_pretty(self) {
+            let _ = fs::write(&path, content);
+        }
+    }
+}
+
 impl Default for Config {
     fn default() -> Self {
         let home = dirs::home_dir().unwrap_or_else(|| PathBuf::from("~"));
@@ -287,6 +332,7 @@ impl Default for Config {
             show_help_bar: true,
             word_wrap: true,
             default_notebook: "Personal".to_string(),
+            remember_last_session: default_remember_last_session(),
             spawn_examples: default_spawn_examples(),
             spawn_themes: default_spawn_themes(),
             theme: ThemeSetting::default(),
@@ -652,6 +698,22 @@ mod tests {
         let default_cfg = Config::default();
         assert_eq!(default_cfg.spawn_examples, true);
         assert_eq!(default_cfg.spawn_themes, true);
+    }
+
+    #[test]
+    fn test_app_state_serialization() {
+        let state = AppState {
+            last_notebook: Some("Work".to_string()),
+            last_section: Some("Projects".to_string()),
+            last_note: Some("Roadmap".to_string()),
+            focused_pane: Some("notes".to_string()),
+        };
+        let toml_str = toml::to_string_pretty(&state).unwrap();
+        let parsed: AppState = toml::from_str(&toml_str).unwrap();
+        assert_eq!(parsed.last_notebook, Some("Work".to_string()));
+        assert_eq!(parsed.last_section, Some("Projects".to_string()));
+        assert_eq!(parsed.last_note, Some("Roadmap".to_string()));
+        assert_eq!(parsed.focused_pane, Some("notes".to_string()));
     }
 }
 
