@@ -460,21 +460,40 @@ impl App {
                     self.status_message = "Exited Fullscreen mode".to_string();
                 }
             }
-            KeyCode::Tab => {
+            KeyCode::Tab | KeyCode::BackTab => {
                 self.focused_pane = match self.focused_pane {
-                    Pane::Notebooks => Pane::Sections,
-                    Pane::Sections => Pane::Notes,
                     Pane::Notes => Pane::MainView,
-                    Pane::MainView => Pane::Notebooks,
+                    Pane::MainView => Pane::Notes,
+                    _ => Pane::Notes,
                 };
             }
-            KeyCode::BackTab => {
-                self.focused_pane = match self.focused_pane {
-                    Pane::Notebooks => Pane::MainView,
-                    Pane::Sections => Pane::Notebooks,
-                    Pane::Notes => Pane::Sections,
-                    Pane::MainView => Pane::Notes,
-                };
+            KeyCode::Char('b') => {
+                self.focused_pane = Pane::Notebooks;
+                self.status_message = "Focused: Notebooks".to_string();
+            }
+            KeyCode::Char('s') => {
+                self.focused_pane = Pane::Sections;
+                self.status_message = "Focused: Sections".to_string();
+            }
+            KeyCode::Char('n') => {
+                self.focused_pane = Pane::Notes;
+                self.status_message = "Focused: Notes".to_string();
+            }
+            KeyCode::Char('1') => {
+                self.focused_pane = Pane::Notebooks;
+                self.status_message = "Focused: Notebooks (1)".to_string();
+            }
+            KeyCode::Char('2') => {
+                self.focused_pane = Pane::Sections;
+                self.status_message = "Focused: Sections (2)".to_string();
+            }
+            KeyCode::Char('3') => {
+                self.focused_pane = Pane::Notes;
+                self.status_message = "Focused: Notes (3)".to_string();
+            }
+            KeyCode::Char('4') => {
+                self.focused_pane = Pane::MainView;
+                self.status_message = "Focused: Note Viewer (4)".to_string();
             }
             KeyCode::Left | KeyCode::Char('h') => match self.focused_pane {
                 Pane::Notebooks => {
@@ -485,7 +504,15 @@ impl App {
                         self.load_current_note();
                     }
                 }
-                _ => {}
+                Pane::Sections => {
+                    self.focused_pane = Pane::Notebooks;
+                }
+                Pane::Notes => {
+                    self.focused_pane = Pane::Sections;
+                }
+                Pane::MainView => {
+                    self.focused_pane = Pane::Notes;
+                }
             },
             KeyCode::Right | KeyCode::Char('l') => match self.focused_pane {
                 Pane::Notebooks => {
@@ -494,9 +521,17 @@ impl App {
                         self.active_section_idx = 0;
                         self.active_note_idx = 0;
                         self.load_current_note();
+                    } else {
+                        self.focused_pane = Pane::Sections;
                     }
                 }
-                _ => {}
+                Pane::Sections => {
+                    self.focused_pane = Pane::Notes;
+                }
+                Pane::Notes => {
+                    self.focused_pane = Pane::MainView;
+                }
+                Pane::MainView => {}
             },
             KeyCode::F(1) => {
                 if !self.manager.notebooks.is_empty() {
@@ -506,7 +541,7 @@ impl App {
                     self.load_current_note();
                 }
             }
-            KeyCode::Char('e') | KeyCode::Enter => {
+            KeyCode::Char('e') => {
                 if self.is_current_note_encrypted() && self.current_note_content.contains("🔒") {
                     self.pending_action = Some(PendingCryptoAction::UnlockNote);
                     self.input_mode = InputMode::PassphrasePrompt {
@@ -516,6 +551,28 @@ impl App {
                     self.input_buffer.clear();
                 } else {
                     self.view_mode = ViewMode::Editor;
+                }
+            }
+            KeyCode::Enter => {
+                match self.focused_pane {
+                    Pane::Notebooks => {
+                        self.focused_pane = Pane::Sections;
+                    }
+                    Pane::Sections => {
+                        self.focused_pane = Pane::Notes;
+                    }
+                    Pane::Notes | Pane::MainView => {
+                        if self.is_current_note_encrypted() && self.current_note_content.contains("🔒") {
+                            self.pending_action = Some(PendingCryptoAction::UnlockNote);
+                            self.input_mode = InputMode::PassphrasePrompt {
+                                prompt: "Unlock Note".to_string(),
+                                error: None,
+                            };
+                            self.input_buffer.clear();
+                        } else {
+                            self.view_mode = ViewMode::Editor;
+                        }
+                    }
                 }
             }
             KeyCode::Char('x') => {

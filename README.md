@@ -53,9 +53,14 @@
 
 | Keybinding | Action |
 | :--- | :--- |
-| `Tab` / `Shift+Tab` | Cycle focus between **Notebooks**, **Sections**, **Notes**, and **Main View** |
-| `↑` / `↓` / `k` / `j` | Navigate list items vertically in **Notebooks**, **Sections**, or **Notes** list boxes, or scroll note preview |
-| `←` / `→` or `h` / `l` | Switch active **Notebook** or navigate panes |
+| `Tab` / `Shift+Tab` | **Superfile-style Toggle**: Toggle focus between **Notes list** and **Main View** |
+| `s` | Jump focus directly to **Sections** pane |
+| `b` | Jump focus directly to **Notebooks** pane |
+| `n` | Jump focus directly to **Notes** pane |
+| `1` / `2` / `3` / `4` | Direct jump to **Notebooks** (`1`), **Sections** (`2`), **Notes** (`3`), **Viewer** (`4`) |
+| `←` / `→` or `h` / `l` | Horizontal column navigation across panes (or cycle Notebook tabs) |
+| `Enter` | Step inside section / open editor on selected note |
+| `↑` / `↓` / `k` / `j` | Navigate list items vertically in active pane, or scroll note preview |
 | `F1` | Cycle active **Notebook** tab |
 | `PageUp` / `PageDown` | Fast scroll note preview |
 | `f` / `F11` / `Ctrl+F` | **Toggle Fullscreen Mode** for Editor or Viewer |
