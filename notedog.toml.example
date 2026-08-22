@@ -59,6 +59,13 @@ notebooks_height = "26%"   # e.g. "26%" or "8" fixed rows
 sections_height = "34%"    # e.g. "34%" or "10" fixed rows
 notes_height = "40%"       # e.g. "40%" or "12" fixed rows
 
+# 🏷️ CUSTOMIZABLE PANE TITLES (SIDEBAR HEADERS & MAIN VIEW)
+[titles]
+notebooks = "NOTEBOOKS"     # Title text for Notebooks pane
+sections = "SECTIONS"       # Title text for Sections pane
+notes = "NOTES"             # Title text for Notes pane
+show_main_title = false     # Set true to show note title at the top of the main viewer/editor pane
+
 # 🎨 CUSTOMIZABLE SECTION ICONS & PRESET REGEX MATCHING RULES
 # Note: Color Emojis (📚 📂 📄 🔒) use your terminal's fixed font color artwork.
 # For full custom icon coloring via `notebook_icon_fg`, use Nerd Fonts symbols below!

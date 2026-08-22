@@ -140,6 +140,34 @@ impl Default for ThemeSetting {
     }
 }
 
+fn default_notebooks_title() -> String { "NOTEBOOKS".to_string() }
+fn default_sections_title() -> String { "SECTIONS".to_string() }
+fn default_notes_title() -> String { "NOTES".to_string() }
+fn default_show_main_title() -> bool { false }
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct TitlesConfig {
+    #[serde(default = "default_notebooks_title")]
+    pub notebooks: String,
+    #[serde(default = "default_sections_title")]
+    pub sections: String,
+    #[serde(default = "default_notes_title")]
+    pub notes: String,
+    #[serde(default = "default_show_main_title")]
+    pub show_main_title: bool,
+}
+
+impl Default for TitlesConfig {
+    fn default() -> Self {
+        Self {
+            notebooks: default_notebooks_title(),
+            sections: default_sections_title(),
+            notes: default_notes_title(),
+            show_main_title: default_show_main_title(),
+        }
+    }
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Config {
     pub note_folder: String,
@@ -166,6 +194,9 @@ pub struct Config {
 
     #[serde(default)]
     pub layout: LayoutConfig,
+
+    #[serde(default)]
+    pub titles: TitlesConfig,
 
     #[serde(default)]
     pub icons: IconConfig,
@@ -200,6 +231,7 @@ impl Default for Config {
             default_section_postfix: default_section_postfix(),
             date_format: default_date_format(),
             layout: LayoutConfig::default(),
+            titles: TitlesConfig::default(),
             icons: IconConfig::default(),
             templates: Vec::new(),
         }
@@ -441,5 +473,30 @@ mod tests {
         let tc = cfg.load_theme();
         assert_eq!(tc.active_border, "#FFCC66");
     }
+
+    #[test]
+    fn test_config_titles_customization() {
+        let toml_str = r#"
+            note_folder = "~/Notes"
+            editor = "builtin"
+            secrets_file = "~/.config/notedog/secrets.toml"
+            transparent_background = true
+            show_help_bar = true
+            word_wrap = true
+            default_notebook = "Personal"
+
+            [titles]
+            notebooks = "My Books"
+            sections = "My Chapters"
+            notes = "My Pages"
+            show_main_title = true
+        "#;
+        let cfg: Config = toml::from_str(toml_str).expect("failed to deserialize config");
+        assert_eq!(cfg.titles.notebooks, "My Books");
+        assert_eq!(cfg.titles.sections, "My Chapters");
+        assert_eq!(cfg.titles.notes, "My Pages");
+        assert_eq!(cfg.titles.show_main_title, true);
+    }
 }
+
 

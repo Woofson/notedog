@@ -109,6 +109,13 @@ notebooks_height = "26%"      # Percentage ("26%") or fixed rows ("8")
 sections_height  = "34%"      # Percentage ("34%") or fixed rows ("10")
 notes_height     = "40%"      # Percentage ("40%") or fixed rows ("12")
 
+# 🏷️ CUSTOMIZABLE PANE TITLES (SIDEBAR HEADERS & MAIN VIEW)
+[titles]
+notebooks       = "NOTEBOOKS" # Title text for Notebooks pane
+sections        = "SECTIONS"  # Title text for Sections pane
+notes           = "NOTES"     # Title text for Notes pane
+show_main_title = false       # Show/hide redundant note title header on the main viewer pane
+
 # 🎨 CUSTOMIZABLE ICONS & REGEX PATTERN RULES
 [icons]
 notebook       = "📚 "

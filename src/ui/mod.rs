@@ -68,10 +68,12 @@ pub fn render_ui(f: &mut Frame, app: &mut App) {
             &app.theme,
             &app.config.icons,
             &app.config.layout,
+            &app.config.titles,
         );
 
         // Main Pane: Preview or Built-in Editor
         let is_main_focused = app.focused_pane == crate::app::Pane::MainView;
+        let show_main_title = app.config.titles.show_main_title;
         match app.view_mode {
             ViewMode::Preview => {
                 let note_title = app.current_note_title();
@@ -84,6 +86,7 @@ pub fn render_ui(f: &mut Frame, app: &mut App) {
                     is_main_focused,
                     app.is_current_note_encrypted(),
                     app.word_wrap,
+                    show_main_title,
                     &app.theme,
                     &app.config.icons,
                 );
@@ -96,6 +99,7 @@ pub fn render_ui(f: &mut Frame, app: &mut App) {
                     &app.editor,
                     &note_title,
                     is_main_focused,
+                    show_main_title,
                     &app.theme,
                     &app.config.icons,
                 );
@@ -104,6 +108,7 @@ pub fn render_ui(f: &mut Frame, app: &mut App) {
     } else {
         // Fullscreen Mode: Main Pane fills the entire main viewport!
         let note_title = app.current_note_title();
+        let show_main_title = app.config.titles.show_main_title;
         match app.view_mode {
             ViewMode::Preview => {
                 note_view::render_note_preview(
@@ -115,6 +120,7 @@ pub fn render_ui(f: &mut Frame, app: &mut App) {
                     true,
                     app.is_current_note_encrypted(),
                     app.word_wrap,
+                    show_main_title,
                     &app.theme,
                     &app.config.icons,
                 );
@@ -126,6 +132,7 @@ pub fn render_ui(f: &mut Frame, app: &mut App) {
                     &app.editor,
                     &format!("FULLSCREEN: {}", note_title),
                     true,
+                    show_main_title,
                     &app.theme,
                     &app.config.icons,
                 );

@@ -61,6 +61,7 @@ pub fn render_navigation_sidebar(
     theme: &Theme,
     icons: &crate::config::IconConfig,
     layout: &crate::config::LayoutConfig,
+    titles: &crate::config::TitlesConfig,
 ) {
     let chunks = Layout::default()
         .direction(Direction::Vertical)
@@ -90,11 +91,16 @@ pub fn render_navigation_sidebar(
         .collect();
 
     let is_nb_focused = focused_pane == "notebooks";
+    let nb_title_str = if icons.notebook.trim().is_empty() {
+        format!(" {} ", titles.notebooks.trim())
+    } else {
+        format!(" {} {} ", icons.notebook.trim(), titles.notebooks.trim())
+    };
     let nb_block = Block::default()
         .borders(Borders::ALL)
         .border_type(BorderType::Rounded)
         .border_style(theme.notebook_border_style(is_nb_focused))
-        .title(Span::styled(format!(" {} NOTEBOOKS ", icons.notebook.trim()), theme.notebook_title_style(is_nb_focused)));
+        .title(Span::styled(nb_title_str, theme.notebook_title_style(is_nb_focused)));
 
     let nb_list = List::new(nb_items).block(nb_block);
     f.render_widget(nb_list, chunks[0]);
@@ -123,11 +129,16 @@ pub fn render_navigation_sidebar(
     };
 
     let is_sec_focused = focused_pane == "sections";
+    let sec_title_str = if icons.section.trim().is_empty() {
+        format!(" {} ", titles.sections.trim())
+    } else {
+        format!(" {} {} ", icons.section.trim(), titles.sections.trim())
+    };
     let sec_block = Block::default()
         .borders(Borders::ALL)
         .border_type(BorderType::Rounded)
         .border_style(theme.section_border_style(is_sec_focused))
-        .title(Span::styled(format!(" {} SECTIONS ", icons.section.trim()), theme.section_title_style_comp(is_sec_focused)));
+        .title(Span::styled(sec_title_str, theme.section_title_style_comp(is_sec_focused)));
 
     let sec_list = List::new(sec_items).block(sec_block);
     f.render_widget(sec_list, chunks[1]);
@@ -167,11 +178,16 @@ pub fn render_navigation_sidebar(
     };
 
     let is_note_focused = focused_pane == "notes";
+    let note_title_str = if icons.note.trim().is_empty() {
+        format!(" {} ", titles.notes.trim())
+    } else {
+        format!(" {} {} ", icons.note.trim(), titles.notes.trim())
+    };
     let note_block = Block::default()
         .borders(Borders::ALL)
         .border_type(BorderType::Rounded)
         .border_style(theme.note_border_style(is_note_focused))
-        .title(Span::styled(format!(" {} NOTES ", icons.note.trim()), theme.note_title_style(is_note_focused)));
+        .title(Span::styled(note_title_str, theme.note_title_style(is_note_focused)));
 
     let note_list = List::new(note_items).block(note_block);
     f.render_widget(note_list, chunks[2]);
