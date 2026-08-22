@@ -1,7 +1,7 @@
 use crate::note_manager::NoteManager;
 use crate::theme::Theme;
 use ratatui::{
-    layout::{Constraint, Direction, Layout, Rect},
+    layout::{Direction, Layout, Rect},
     style::{Modifier, Style},
     text::{Line, Span},
     widgets::{Block, BorderType, Borders, List, ListItem, Tabs},

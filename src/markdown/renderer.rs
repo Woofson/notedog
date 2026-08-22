@@ -1,4 +1,4 @@
-use crate::markdown::color_parser::{parse_color_tags, ColorSpan};
+use crate::markdown::color_parser::parse_color_tags;
 use crate::mermaid::{parse_mermaid, render_mermaid_to_lines};
 use crate::theme::Theme;
 use ratatui::style::{Color, Modifier, Style};
@@ -9,7 +9,7 @@ pub fn render_markdown(markdown_text: &str, theme: &Theme) -> Vec<Line<'static>>
     let mut in_code_block = false;
     let mut is_mermaid_block = false;
     let mut mermaid_buffer = String::new();
-    let mut code_lang = String::new();
+    let mut code_lang;
 
     for line in markdown_text.lines() {
         let trimmed = line.trim();

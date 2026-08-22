@@ -185,7 +185,7 @@ fn parse_line_as_edge(
         return None;
     }
 
-    let mut left_str = parts[0].trim();
+    let left_str = parts[0].trim();
     let mut right_str = parts[1].trim();
 
     // Check if label is in pipe format: A -->|label| B
