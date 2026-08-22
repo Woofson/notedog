@@ -207,3 +207,57 @@ pub fn render_confirm_delete_modal(
 
     f.render_widget(block, popup_area);
 }
+
+pub fn render_confirm_editor_exit_modal(
+    f: &mut Frame,
+    area: Rect,
+    note_name: &str,
+    theme: &Theme,
+) {
+    let popup_area = centered_rect(60, 24, area);
+
+    f.render_widget(Clear, popup_area);
+
+    let block = Block::default()
+        .borders(Borders::ALL)
+        .border_type(BorderType::Double)
+        .border_style(Style::default().fg(theme.accent))
+        .title(Span::styled(
+            " ⚠️ UNSAVED CHANGES ",
+            Style::default().fg(theme.accent).add_modifier(Modifier::BOLD),
+        ));
+
+    let inner_chunks = Layout::default()
+        .direction(Direction::Vertical)
+        .margin(1)
+        .constraints([
+            Constraint::Length(2),
+            Constraint::Length(2),
+        ])
+        .split(popup_area);
+
+    let label = Paragraph::new(vec![
+        Line::from(Span::styled(
+            format!("You have unsaved edits in '{}'.", note_name),
+            Style::default().fg(theme.foreground).add_modifier(Modifier::BOLD),
+        )),
+        Line::from(Span::styled(
+            "Save your changes before exiting to preview?",
+            Style::default().fg(theme.secondary),
+        )),
+    ]);
+    f.render_widget(label, inner_chunks[0]);
+
+    let footer = Paragraph::new(Line::from(vec![
+        Span::styled(" [S / Enter] ", Style::default().fg(theme.primary).add_modifier(Modifier::BOLD)),
+        Span::styled("Save & Exit   ", theme.fg_style()),
+        Span::styled(" [D] ", Style::default().fg(Color::Red).add_modifier(Modifier::BOLD)),
+        Span::styled("Discard   ", theme.fg_style()),
+        Span::styled(" [Esc / C] ", Style::default().fg(theme.border).add_modifier(Modifier::BOLD)),
+        Span::styled("Cancel", theme.fg_style()),
+    ]));
+    f.render_widget(footer, inner_chunks[1]);
+
+    f.render_widget(block, popup_area);
+}
+

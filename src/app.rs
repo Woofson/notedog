@@ -41,6 +41,7 @@ pub enum InputMode {
         title: String,
         item_type: String,
     },
+    ConfirmEditorExit,
     VersionHistory,
     VersionCleanup,
     About,
@@ -163,6 +164,10 @@ impl App {
             .unwrap_or(false)
     }
 
+    pub fn current_note_dir(&self) -> Option<std::path::PathBuf> {
+        self.current_note_file().and_then(|n| n.path.parent().map(|p| p.to_path_buf()))
+    }
+
     pub fn load_current_note(&mut self) {
         self.preview_scroll_y = 0;
         let note_file = match self.current_note_file() {
@@ -242,6 +247,7 @@ impl App {
                 let it = item_type.clone();
                 self.handle_confirm_delete(key, &t, &it)
             }
+            InputMode::ConfirmEditorExit => self.handle_confirm_editor_exit(key),
             InputMode::VersionHistory => self.handle_version_history(key),
             InputMode::VersionCleanup => self.handle_version_cleanup(key),
             InputMode::About => {
@@ -414,8 +420,12 @@ impl App {
         if self.view_mode == ViewMode::Editor {
             match key.code {
                 KeyCode::Esc => {
-                    self.view_mode = ViewMode::Preview;
-                    self.load_current_note();
+                    if self.editor.is_modified {
+                        self.input_mode = InputMode::ConfirmEditorExit;
+                    } else {
+                        self.view_mode = ViewMode::Preview;
+                        self.load_current_note();
+                    }
                     return false;
                 }
                 KeyCode::Up => self.editor.move_up(),
@@ -725,6 +735,29 @@ impl App {
             KeyCode::Char('n') | KeyCode::Char('N') | KeyCode::Esc => {
                 self.input_mode = InputMode::Normal;
                 self.status_message = "Deletion cancelled".to_string();
+            }
+            _ => {}
+        }
+        false
+    }
+
+    fn handle_confirm_editor_exit(&mut self, key: KeyEvent) -> bool {
+        match key.code {
+            KeyCode::Char('s') | KeyCode::Char('S') | KeyCode::Enter => {
+                self.save_current_editor_content();
+                self.view_mode = ViewMode::Preview;
+                self.input_mode = InputMode::Normal;
+                self.status_message = "Saved note changes".to_string();
+            }
+            KeyCode::Char('d') | KeyCode::Char('D') => {
+                self.view_mode = ViewMode::Preview;
+                self.load_current_note();
+                self.input_mode = InputMode::Normal;
+                self.status_message = "Discarded unsaved edits".to_string();
+            }
+            KeyCode::Esc | KeyCode::Char('c') | KeyCode::Char('C') => {
+                self.input_mode = InputMode::Normal;
+                self.status_message = "Resumed editing".to_string();
             }
             _ => {}
         }

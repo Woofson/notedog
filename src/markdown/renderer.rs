@@ -1,10 +1,11 @@
+use std::path::Path;
 use crate::markdown::color_parser::parse_color_tags;
 use crate::mermaid::{parse_mermaid, render_mermaid_to_lines};
 use crate::theme::Theme;
 use ratatui::style::{Color, Modifier, Style};
 use ratatui::text::{Line, Span};
 
-pub fn render_markdown(markdown_text: &str, theme: &Theme) -> Vec<Line<'static>> {
+pub fn render_markdown(markdown_text: &str, theme: &Theme, base_dir: Option<&Path>) -> Vec<Line<'static>> {
     let mut lines: Vec<Line<'static>> = Vec::new();
     let mut in_code_block = false;
     let mut is_mermaid_block = false;
@@ -171,6 +172,14 @@ pub fn render_markdown(markdown_text: &str, theme: &Theme) -> Vec<Line<'static>>
             continue;
         }
 
+        // Markdown Image: ![Alt text](path/to/image.png)
+        if let Some((alt, img_path)) = crate::markdown::image_render::parse_image_tag(trimmed) {
+            let img_lines = crate::markdown::image_render::render_image_to_lines(img_path, alt, base_dir, theme);
+            lines.extend(img_lines);
+            lines.push(Line::from(""));
+            continue;
+        }
+
         // Normal paragraph with HTML & Custom inline color parsing
         let spans = build_inline_spans(line, theme, None, false, false);
         lines.push(Line::from(spans));
@@ -246,3 +255,21 @@ fn parse_basic_markdown_tokens(
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_render_markdown_with_image() {
+        let theme = Theme::from_config(&crate::theme::ThemeConfig::default(), true);
+        let md = "# Title\n\n![Test Image](non_existent_test_image.png)\n\nSome text.";
+        let lines = render_markdown(md, &theme, None);
+        assert!(!lines.is_empty());
+        let full_text: String = lines.iter().map(|l| {
+            l.spans.iter().map(|s| s.content.as_ref()).collect::<Vec<_>>().join("")
+        }).collect::<Vec<_>>().join("\n");
+        assert!(full_text.contains("Test Image") || full_text.contains("Image Not Found"));
+    }
+}
+

@@ -38,6 +38,11 @@
 - **📜 Endless Revision History & Live Diffs**:
   - Automated timestamped snapshots on every note edit.
   - Interactive version browser modal (`v` or `Ctrl+V`) with live line-by-line diffs (`+`/`-`), single-click restoration, and cleanup presets.
+- **🖼️ Markdown Image Viewer (Kitty, Alacritty, WezTerm, Foot, etc.)**:
+  - Automatically parses standard markdown image syntax `![Alt Text](path/to/image.png)` or `![Caption](./assets/photo.jpg)`.
+  - Renders crisp 24-bit TrueColor images using Unicode half-blocks (`▀`) that display natively across Kitty, Alacritty, WezTerm, Ghostty, Foot, and scroll smoothly with your notes.
+- **🛡️ Safe Built-in Editor with Unsaved Changes Prompt**:
+  - Hitting `Esc` while editing notes with unsaved changes presents an interactive confirmation modal (`[S] Save & Exit`, `[D] Discard Changes`, `[Esc] Cancel / Resume Editing`) to prevent accidental loss of edits.
 - **✏️ Flexible Editing & Cross-Shell Support**:
   - Built-in TUI text editor with live syntax colors, line numbers, cursor highlighting, and shortcut toolbars.
   - Launch external editors (`$EDITOR`, `nvim`, `nano`, `micro`) with `x` key across `fish`, `bash`, and `zsh` with automatic screen flush and redraw.

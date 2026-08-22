@@ -1,4 +1,5 @@
 pub mod color_parser;
+pub mod image_render;
 pub mod renderer;
 
 #[allow(unused_imports)]

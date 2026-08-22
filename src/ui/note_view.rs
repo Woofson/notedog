@@ -1,3 +1,4 @@
+use std::path::Path;
 use crate::markdown::render_markdown;
 use crate::theme::Theme;
 use ratatui::{
@@ -18,10 +19,11 @@ pub fn render_note_preview(
     is_encrypted: bool,
     word_wrap: bool,
     show_title: bool,
+    base_dir: Option<&Path>,
     theme: &Theme,
     icons: &crate::config::IconConfig,
 ) {
-    let rendered_lines = render_markdown(markdown_text, theme);
+    let rendered_lines = render_markdown(markdown_text, theme, base_dir);
     let line_count = rendered_lines.len();
 
     let wrap_badge = if word_wrap { "[Wrap: ON]" } else { "[Wrap: OFF]" };
