@@ -23,7 +23,7 @@ pub fn render_note_preview(
     theme: &Theme,
     icons: &crate::config::IconConfig,
 ) {
-    let rendered_lines = render_markdown(markdown_text, theme, base_dir);
+    let rendered_lines = render_markdown(markdown_text, theme, base_dir, Some(icons));
     let line_count = rendered_lines.len();
 
     let wrap_label = if word_wrap { "wrap on" } else { "wrap off" };

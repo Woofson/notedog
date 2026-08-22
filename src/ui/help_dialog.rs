@@ -45,6 +45,7 @@ pub fn render_help_modal(f: &mut Frame, area: Rect, scroll_y: usize, theme: &The
         Line::from(vec![Span::styled("EDITING & PREVIEW", Style::default().fg(theme.accent).add_modifier(Modifier::BOLD))]),
         Line::from(vec![Span::raw("  f / F11 / Ctrl+F  Toggle Fullscreen mode for Editor or Viewer")]),
         Line::from(vec![Span::raw("  w                 Toggle Word Wrap ON/OFF in Note Viewer")]),
+        Line::from(vec![Span::raw("  Ctrl+W            Toggle Word Wrap / Horizontal Scrolling in Built-in Editor")]),
         Line::from(vec![Span::raw("  e / Enter         Open Built-in TUI Text Editor")]),
         Line::from(vec![Span::raw("  x                 Launch External Editor ($EDITOR / nvim / nano)")]),
         Line::from(vec![Span::raw("  Ctrl+S            Save note changes in built-in editor")]),

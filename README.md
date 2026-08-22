@@ -1,4 +1,4 @@
-# 🐶 Notedog (v0.5.9)
+# 🐶 Notedog (v0.5.10)
 
 > A vibrant, cross-platform TUI Notes application in Rust inspired by OneNote and Obsidian. Built by **Bolt J Woofson** (`https://github.com/Woofson/notedog`). Features Smart Note Templates with interactive tickboxes, Superfile & Ayu Dark inspired UI layout, customizable regex icon rules, resizable layout dimensions, maximum per-item color & background customizability, endless file revision history, universal Markdown colors, native Mermaid flowcharts, and ChaCha20-Poly1305 + Argon2id note encryption.
 
@@ -49,6 +49,7 @@
   - Hitting `Esc` while editing notes with unsaved changes presents an interactive confirmation modal (`[S] Save & Exit`, `[D] Discard Changes`, `[Esc] Cancel / Resume Editing`) to prevent accidental loss of edits.
 - **✏️ Flexible Editing & Cross-Shell Support**:
   - Built-in TUI text editor with live syntax colors, line numbers, cursor highlighting, and shortcut toolbars.
+  - **Horizontal Scrolling & Word Wrap**: Automatic horizontal scrolling ensures zero cursor clipping on long lines in narrow terminals, and `Ctrl+W` toggles multi-line word wrapping on the fly.
   - Launch external editors (`$EDITOR`, `nvim`, `nano`, `micro`) with `x` key across `fish`, `bash`, and `zsh` with automatic screen flush and redraw.
 
 ---
@@ -69,6 +70,7 @@
 | `PageUp` / `PageDown` | Fast scroll note preview |
 | `f` / `F11` / `Ctrl+F` | **Toggle Fullscreen Mode** for Editor or Viewer |
 | `w` | **Toggle Word Wrap ON/OFF** in Note Viewer |
+| `Ctrl+W` | **Toggle Word Wrap / Horiz Scroll** in Built-in Editor |
 | `e` / `Enter` | Open built-in TUI text editor (or unlock encrypted note) |
 | `x` | Launch external editor (`$EDITOR` / `nvim` / `nano`) |
 | `Ctrl+S` | Save current note (in built-in editor) |

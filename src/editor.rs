@@ -3,7 +3,9 @@ pub struct Editor {
     pub lines: Vec<String>,
     pub cursor_x: usize,
     pub cursor_y: usize,
+    pub scroll_x: usize,
     pub scroll_y: usize,
+    pub word_wrap: bool,
     pub is_modified: bool,
 }
 
@@ -13,7 +15,9 @@ impl Default for Editor {
             lines: vec![String::new()],
             cursor_x: 0,
             cursor_y: 0,
+            scroll_x: 0,
             scroll_y: 0,
+            word_wrap: false,
             is_modified: false,
         }
     }
@@ -31,9 +35,15 @@ impl Editor {
             lines,
             cursor_x: 0,
             cursor_y: 0,
+            scroll_x: 0,
             scroll_y: 0,
+            word_wrap: false,
             is_modified: false,
         }
+    }
+
+    pub fn toggle_word_wrap(&mut self) {
+        self.word_wrap = !self.word_wrap;
     }
 
     pub fn to_string(&self) -> String {

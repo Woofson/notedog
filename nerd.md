@@ -17,6 +17,9 @@ note           = "󰈙 "
 encrypted_note = "󰌾 "
 preview        = "󰍦 "
 editor         = "󰏆 "
+header_1       = "󰌹 " # Nerd Font Pin icon for # Headers
+header_2       = "󰄾 " # Nerd Font bullet for ## Headers
+header_3       = "󰅂 " # Nerd Font bullet for ### Headers
 
 # Theme Tint Colors (Now Nerd Font icons will be colored with these hex codes!)
 [theme]

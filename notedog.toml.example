@@ -91,6 +91,10 @@ note = "📄 "
 encrypted_note = "🔒 "
 preview = "📖 "
 editor = "✏️ "
+# Markdown Header Icons (Change pin/bullet icon or set to "" to disable):
+header_1 = "📌 "     # Header 1 icon (pin). Set to "" or "# " or custom Nerd Font icon
+header_2 = "🔸 "     # Header 2 icon
+header_3 = "🔹 "     # Header 3 icon
 
 # Nerd Fonts Alternatives (Supports full custom RGB / Hex coloring!):
 # notebook = "󰉋 "
@@ -99,6 +103,9 @@ editor = "✏️ "
 # encrypted_note = "󰌾 "
 # preview = "📖 "
 # editor = "✏️ "
+# header_1 = "󰌹 "    # Nerd Font pin icon
+# header_2 = "󰄾 "
+# header_3 = "󰅂 "
 
 # 📋 TODO & TASKLIST PRESETS
 [[icons.rules]]

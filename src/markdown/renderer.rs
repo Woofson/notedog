@@ -5,7 +5,12 @@ use crate::theme::Theme;
 use ratatui::style::{Color, Modifier, Style};
 use ratatui::text::{Line, Span};
 
-pub fn render_markdown(markdown_text: &str, theme: &Theme, base_dir: Option<&Path>) -> Vec<Line<'static>> {
+pub fn render_markdown(
+    markdown_text: &str,
+    theme: &Theme,
+    base_dir: Option<&Path>,
+    icons: Option<&crate::config::IconConfig>,
+) -> Vec<Line<'static>> {
     let mut lines: Vec<Line<'static>> = Vec::new();
     let mut in_code_block = false;
     let mut is_mermaid_block = false;
@@ -100,41 +105,50 @@ pub fn render_markdown(markdown_text: &str, theme: &Theme, base_dir: Option<&Pat
         // Headers
         if line.starts_with("# ") {
             let text = &line[2..];
-            lines.push(Line::from(vec![
-                Span::styled("📌 ", Style::default().fg(theme.primary)),
-                Span::styled(
-                    text.to_string(),
-                    Style::default()
-                        .fg(theme.header_1)
-                        .add_modifier(Modifier::BOLD | Modifier::UNDERLINED),
-                ),
-            ]));
+            let h1_icon = icons.map(|ic| ic.header_1.as_str()).unwrap_or("📌 ");
+            let mut line_spans = Vec::new();
+            if !h1_icon.is_empty() {
+                line_spans.push(Span::styled(h1_icon.to_string(), Style::default().fg(theme.primary)));
+            }
+            line_spans.push(Span::styled(
+                text.to_string(),
+                Style::default()
+                    .fg(theme.header_1)
+                    .add_modifier(Modifier::BOLD | Modifier::UNDERLINED),
+            ));
+            lines.push(Line::from(line_spans));
             lines.push(Line::from(""));
             continue;
         } else if line.starts_with("## ") {
             let text = &line[3..];
-            lines.push(Line::from(vec![
-                Span::styled("🔸 ", Style::default().fg(theme.secondary)),
-                Span::styled(
-                    text.to_string(),
-                    Style::default()
-                        .fg(theme.header_2)
-                        .add_modifier(Modifier::BOLD),
-                ),
-            ]));
+            let h2_icon = icons.map(|ic| ic.header_2.as_str()).unwrap_or("🔸 ");
+            let mut line_spans = Vec::new();
+            if !h2_icon.is_empty() {
+                line_spans.push(Span::styled(h2_icon.to_string(), Style::default().fg(theme.secondary)));
+            }
+            line_spans.push(Span::styled(
+                text.to_string(),
+                Style::default()
+                    .fg(theme.header_2)
+                    .add_modifier(Modifier::BOLD),
+            ));
+            lines.push(Line::from(line_spans));
             lines.push(Line::from(""));
             continue;
         } else if line.starts_with("### ") {
             let text = &line[4..];
-            lines.push(Line::from(vec![
-                Span::styled("🔹 ", Style::default().fg(theme.accent)),
-                Span::styled(
-                    text.to_string(),
-                    Style::default()
-                        .fg(theme.header_3)
-                        .add_modifier(Modifier::BOLD),
-                ),
-            ]));
+            let h3_icon = icons.map(|ic| ic.header_3.as_str()).unwrap_or("🔹 ");
+            let mut line_spans = Vec::new();
+            if !h3_icon.is_empty() {
+                line_spans.push(Span::styled(h3_icon.to_string(), Style::default().fg(theme.accent)));
+            }
+            line_spans.push(Span::styled(
+                text.to_string(),
+                Style::default()
+                    .fg(theme.header_3)
+                    .add_modifier(Modifier::BOLD),
+            ));
+            lines.push(Line::from(line_spans));
             continue;
         }
 
@@ -264,12 +278,27 @@ mod tests {
     fn test_render_markdown_with_image() {
         let theme = Theme::from_config(&crate::theme::ThemeConfig::default(), true);
         let md = "# Title\n\n![Test Image](non_existent_test_image.png)\n\nSome text.";
-        let lines = render_markdown(md, &theme, None);
+        let lines = render_markdown(md, &theme, None, None);
         assert!(!lines.is_empty());
         let full_text: String = lines.iter().map(|l| {
             l.spans.iter().map(|s| s.content.as_ref()).collect::<Vec<_>>().join("")
         }).collect::<Vec<_>>().join("\n");
         assert!(full_text.contains("Test Image") || full_text.contains("Image Not Found"));
+    }
+
+    #[test]
+    fn test_custom_header_icons() {
+        let theme = Theme::from_config(&crate::theme::ThemeConfig::default(), true);
+        let mut icons = crate::config::IconConfig::default();
+        icons.header_1 = "🔖 ".to_string();
+        icons.header_2 = "⭐ ".to_string();
+        let md = "# Main Header\n\n## Sub Header";
+        let lines = render_markdown(md, &theme, None, Some(&icons));
+        let full_text: String = lines.iter().map(|l| {
+            l.spans.iter().map(|s| s.content.as_ref()).collect::<Vec<_>>().join("")
+        }).collect::<Vec<_>>().join("\n");
+        assert!(full_text.contains("🔖 Main Header"));
+        assert!(full_text.contains("⭐ Sub Header"));
     }
 }
 

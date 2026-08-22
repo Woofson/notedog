@@ -17,6 +17,9 @@ fn default_note_icon() -> String { "📄 ".to_string() }
 fn default_encrypted_note_icon() -> String { "🔒 ".to_string() }
 fn default_preview_icon() -> String { "📖 ".to_string() }
 fn default_editor_icon() -> String { "✏️ ".to_string() }
+fn default_header_1_icon() -> String { "📌 ".to_string() }
+fn default_header_2_icon() -> String { "🔸 ".to_string() }
+fn default_header_3_icon() -> String { "🔹 ".to_string() }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum IconType {
@@ -60,6 +63,12 @@ pub struct IconConfig {
     pub preview: String,
     #[serde(default = "default_editor_icon")]
     pub editor: String,
+    #[serde(default = "default_header_1_icon", alias = "pin", alias = "h1", alias = "header_1", alias = "header")]
+    pub header_1: String,
+    #[serde(default = "default_header_2_icon", alias = "h2", alias = "header_2")]
+    pub header_2: String,
+    #[serde(default = "default_header_3_icon", alias = "h3", alias = "header_3")]
+    pub header_3: String,
     #[serde(default)]
     pub rules: Vec<IconRule>,
 }
@@ -108,6 +117,9 @@ impl Default for IconConfig {
             encrypted_note: default_encrypted_note_icon(),
             preview: default_preview_icon(),
             editor: default_editor_icon(),
+            header_1: default_header_1_icon(),
+            header_2: default_header_2_icon(),
+            header_3: default_header_3_icon(),
             rules: vec![
                 IconRule { pattern: "(?i).*(todo|tasks|tasklist|checklist|to-do).*".to_string(), icon: "✅ ".to_string(), target: None },
                 IconRule { pattern: "(?i).*(shopping|grocery|groceries|store|buy|buy-list).*".to_string(), icon: "🛒 ".to_string(), target: None },

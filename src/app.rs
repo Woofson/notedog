@@ -613,6 +613,13 @@ impl App {
                     }
                     return false;
                 }
+                KeyCode::Char('w') => {
+                    if self.view_mode == ViewMode::Editor {
+                        self.editor.toggle_word_wrap();
+                        self.status_message = format!("Editor Word Wrap: {}", if self.editor.word_wrap { "ON" } else { "OFF" });
+                    }
+                    return false;
+                }
                 KeyCode::Char('c') => {
                     if self.view_mode == ViewMode::Editor {
                         self.editor.insert_color_tag("#FF8C00");
