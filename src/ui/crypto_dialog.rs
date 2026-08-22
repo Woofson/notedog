@@ -39,7 +39,7 @@ pub fn render_passphrase_modal(
         ])
         .split(popup_area);
 
-    let label = Paragraph::new("Enter Note Encryption Passphrase:");
+    let label = Paragraph::new("Enter Encryption / Decryption Passphrase:");
     f.render_widget(label, inner_chunks[0]);
 
     let masked = "*".repeat(input_buffer.len());

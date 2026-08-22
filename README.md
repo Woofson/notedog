@@ -1,4 +1,4 @@
-# 🐶 Notedog (v0.5.5)
+# 🐶 Notedog (v0.5.6)
 
 > A vibrant, cross-platform TUI Notes application in Rust inspired by OneNote and Obsidian. Built by **Bolt J Woofson** (`https://github.com/Woofson/notedog`). Features Smart Note Templates with interactive tickboxes, Superfile & Ayu Dark inspired UI layout, customizable regex icon rules, resizable layout dimensions, maximum per-item color & background customizability, endless file revision history, universal Markdown colors, native Mermaid flowcharts, and ChaCha20-Poly1305 + Argon2id note encryption.
 
@@ -32,9 +32,10 @@
 - **📊 Native Mermaid Flowchart Engine**:
   - Automatically parses ` ```mermaid ` code blocks (`graph TD`, `graph LR`).
   - Renders flowchart nodes with Unicode box-drawing shapes (`┌──┐`, `╭──╮`, `◇`) and directional arrows (`▼`, `──►`) directly in the terminal.
-- **🔒 Secure Note Encryption**:
-  - Encrypt/decrypt individual notes using **ChaCha20-Poly1305** symmetric AEAD cipher with **Argon2id** key derivation.
-  - Encrypted notes are saved with `.md.enc` extension and indicated with a 🔒 lock badge in the file browser.
+- **🔒 Secure Notebook, Section & Note Encryption**:
+  - Contextually encrypt or decrypt individual **Notes**, entire **Sections**, or full **Notebooks** with a single `Ctrl+E` shortcut using military-grade **ChaCha20-Poly1305** symmetric AEAD cipher and **Argon2id** key derivation.
+  - Encrypted notes, sections, and notebooks are clearly badged with `[ENC]` and lock glyphs (`🔒`).
+  - Seamless memory session caching unlocks entire encrypted sections and notebooks upon entering the passphrase.
 - **📜 Endless Revision History & Live Diffs**:
   - Automated timestamped snapshots on every note edit.
   - Interactive version browser modal (`v` or `Ctrl+V`) with live line-by-line diffs (`+`/`-`), single-click restoration, and cleanup presets.
@@ -76,7 +77,7 @@
 | `r` / `Ctrl+R` | **Contextual Rename**: Rename focused Notebook, Section, or Note on disk |
 | `Ctrl+D` / `d` | **Contextual Delete**: Safely delete focused Notebook, Section, or Note with confirmation dialog |
 | `v` / `Ctrl+V` | **Revision History Modal**: Browse endless file version snapshots, view live line diffs (`+`/`-`), restore past revisions, or open cleanup presets |
-| `Ctrl+E` | Encrypt or Decrypt current note (prompts for passphrase) |
+| `Ctrl+E` | **Contextual Encrypt/Decrypt**: Encrypt or decrypt focused Notebook, Section, or Note with Argon2 + ChaCha20 |
 | `F2` / `Ctrl+A` | Open **About NoteDog** page (Author: **Bolt J Woofson**, Repository: `Woofson/notedog`) |
 | `?` | Toggle interactive Help & Shortcut cheat sheet modal |
 | `q` | Quit Notedog |

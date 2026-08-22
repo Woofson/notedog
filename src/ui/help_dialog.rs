@@ -52,7 +52,7 @@ pub fn render_help_modal(f: &mut Frame, area: Rect, scroll_y: usize, theme: &The
         Line::from(vec![Span::raw("  Ctrl+M            Insert Mermaid Flowchart Diagram template")]),
         Line::from(""),
         Line::from(vec![Span::styled("ENCRYPTION & DECRYPTION", Style::default().fg(theme.encrypted_tag).add_modifier(Modifier::BOLD))]),
-        Line::from(vec![Span::raw("  Ctrl+E            Encrypt or Decrypt current note with Argon2 + ChaCha20")]),
+        Line::from(vec![Span::raw("  Ctrl+E            Contextual Encrypt/Decrypt (Encrypt/Decrypt focused Notebook, Section, or Note)")]),
         Line::from(""),
         Line::from(vec![Span::styled("VERSIONING & REVISIONS", Style::default().fg(theme.primary).add_modifier(Modifier::BOLD))]),
         Line::from(vec![Span::raw("  v / Ctrl+V        Open Revision History modal (View Live Line Diffs, Restore, or Delete snapshots)")]),

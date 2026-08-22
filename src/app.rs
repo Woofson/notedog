@@ -52,6 +52,10 @@ pub enum PendingCryptoAction {
     UnlockNote,
     EncryptCurrentNote,
     DecryptCurrentNote,
+    EncryptCurrentSection,
+    DecryptCurrentSection,
+    EncryptCurrentNotebook,
+    DecryptCurrentNotebook,
 }
 
 pub struct App {
@@ -381,16 +385,62 @@ impl App {
                     return false;
                 }
                 KeyCode::Char('e') => {
-                    // Toggle encryption
-                    if self.is_current_note_encrypted() {
-                        self.pending_action = Some(PendingCryptoAction::DecryptCurrentNote);
-                    } else {
-                        self.pending_action = Some(PendingCryptoAction::EncryptCurrentNote);
+                    // Contextual toggle encryption for Notebook, Section, or Note
+                    match self.focused_pane {
+                        Pane::Notebooks => {
+                            let nb_name = self.current_notebook_name();
+                            let is_enc = self.manager.notebooks.get(self.active_notebook_idx).map(|nb| nb.is_encrypted).unwrap_or(false);
+                            if is_enc {
+                                self.pending_action = Some(PendingCryptoAction::DecryptCurrentNotebook);
+                                self.input_mode = InputMode::PassphrasePrompt {
+                                    prompt: format!("Decrypt Notebook '{}'", nb_name),
+                                    error: None,
+                                };
+                            } else {
+                                self.pending_action = Some(PendingCryptoAction::EncryptCurrentNotebook);
+                                self.input_mode = InputMode::PassphrasePrompt {
+                                    prompt: format!("Encrypt Notebook '{}'", nb_name),
+                                    error: None,
+                                };
+                            }
+                        }
+                        Pane::Sections => {
+                            let sec_name = self.current_section_name();
+                            let is_enc = self.manager.notebooks.get(self.active_notebook_idx)
+                                .and_then(|nb| nb.sections.get(self.active_section_idx))
+                                .map(|sec| sec.is_encrypted)
+                                .unwrap_or(false);
+                            if is_enc {
+                                self.pending_action = Some(PendingCryptoAction::DecryptCurrentSection);
+                                self.input_mode = InputMode::PassphrasePrompt {
+                                    prompt: format!("Decrypt Section '{}'", sec_name),
+                                    error: None,
+                                };
+                            } else {
+                                self.pending_action = Some(PendingCryptoAction::EncryptCurrentSection);
+                                self.input_mode = InputMode::PassphrasePrompt {
+                                    prompt: format!("Encrypt Section '{}'", sec_name),
+                                    error: None,
+                                };
+                            }
+                        }
+                        Pane::Notes | Pane::MainView => {
+                            let note_title = self.current_note_title();
+                            if self.is_current_note_encrypted() {
+                                self.pending_action = Some(PendingCryptoAction::DecryptCurrentNote);
+                                self.input_mode = InputMode::PassphrasePrompt {
+                                    prompt: format!("Decrypt Note '{}'", note_title),
+                                    error: None,
+                                };
+                            } else {
+                                self.pending_action = Some(PendingCryptoAction::EncryptCurrentNote);
+                                self.input_mode = InputMode::PassphrasePrompt {
+                                    prompt: format!("Encrypt Note '{}'", note_title),
+                                    error: None,
+                                };
+                            }
+                        }
                     }
-                    self.input_mode = InputMode::PassphrasePrompt {
-                        prompt: "Encryption Passphrase".to_string(),
-                        error: None,
-                    };
                     self.input_buffer.clear();
                     return false;
                 }
@@ -889,8 +939,68 @@ impl App {
                 }
                 self.input_mode = InputMode::PassphrasePrompt {
                     prompt: "Decrypt Note".to_string(),
-                    error: Some("Failed to decrypt note".to_string()),
+                    error: Some("Failed to decrypt note (incorrect passphrase)".to_string()),
                 };
+            }
+            Some(PendingCryptoAction::EncryptCurrentSection) => {
+                let sec_name = self.current_section_name();
+                match self.manager.encrypt_section(self.active_notebook_idx, self.active_section_idx, passphrase) {
+                    Ok(count) => {
+                        self.load_current_note();
+                        self.status_message = format!("Section '{}' encrypted ({} notes secured)!", sec_name, count);
+                    }
+                    Err(e) => {
+                        self.status_message = format!("Failed to encrypt section: {}", e);
+                    }
+                }
+                self.input_mode = InputMode::Normal;
+            }
+            Some(PendingCryptoAction::DecryptCurrentSection) => {
+                let sec_name = self.current_section_name();
+                match self.manager.decrypt_section(self.active_notebook_idx, self.active_section_idx, passphrase) {
+                    Ok(count) => {
+                        self.load_current_note();
+                        self.status_message = format!("Section '{}' decrypted ({} notes decrypted)!", sec_name, count);
+                        self.input_mode = InputMode::Normal;
+                        return;
+                    }
+                    Err(e) => {
+                        self.input_mode = InputMode::PassphrasePrompt {
+                            prompt: format!("Decrypt Section '{}'", sec_name),
+                            error: Some(format!("Decryption failed: {}", e)),
+                        };
+                    }
+                }
+            }
+            Some(PendingCryptoAction::EncryptCurrentNotebook) => {
+                let nb_name = self.current_notebook_name();
+                match self.manager.encrypt_notebook(self.active_notebook_idx, passphrase) {
+                    Ok(count) => {
+                        self.load_current_note();
+                        self.status_message = format!("Notebook '{}' encrypted ({} notes secured)!", nb_name, count);
+                    }
+                    Err(e) => {
+                        self.status_message = format!("Failed to encrypt notebook: {}", e);
+                    }
+                }
+                self.input_mode = InputMode::Normal;
+            }
+            Some(PendingCryptoAction::DecryptCurrentNotebook) => {
+                let nb_name = self.current_notebook_name();
+                match self.manager.decrypt_notebook(self.active_notebook_idx, passphrase) {
+                    Ok(count) => {
+                        self.load_current_note();
+                        self.status_message = format!("Notebook '{}' decrypted ({} notes decrypted)!", nb_name, count);
+                        self.input_mode = InputMode::Normal;
+                        return;
+                    }
+                    Err(e) => {
+                        self.input_mode = InputMode::PassphrasePrompt {
+                            prompt: format!("Decrypt Notebook '{}'", nb_name),
+                            error: Some(format!("Decryption failed: {}", e)),
+                        };
+                    }
+                }
             }
             None => {
                 self.input_mode = InputMode::Normal;

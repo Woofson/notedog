@@ -79,13 +79,24 @@ pub fn render_navigation_sidebar(
         .enumerate()
         .map(|(i, nb)| {
             let is_selected = i == active_nb;
-            let icon = icons.get_icon_for(&nb.name, crate::config::IconType::Notebook, &icons.notebook);
-            let style = theme.notebook_item_style(is_selected);
-            let icon_style = theme.notebook_icon_style(is_selected);
+            let default_ic = if nb.is_encrypted { &icons.encrypted_note } else { &icons.notebook };
+            let icon = icons.get_icon_for(&nb.name, crate::config::IconType::Notebook, default_ic);
+            let style = if nb.is_encrypted && !is_selected {
+                Style::default().fg(theme.encrypted_tag).add_modifier(Modifier::BOLD)
+            } else {
+                theme.notebook_item_style(is_selected)
+            };
+            let icon_style = if nb.is_encrypted {
+                Style::default().fg(theme.encrypted_tag)
+            } else {
+                theme.notebook_icon_style(is_selected)
+            };
+            let lock_badge = if nb.is_encrypted { " [ENC]" } else { "" };
             let bg_style = theme.notebook_item_bg_style(is_selected);
             ListItem::new(Line::from(vec![
                 Span::styled(format!("{} ", icon), icon_style),
                 Span::styled(nb.name.clone(), style),
+                Span::styled(lock_badge, Style::default().fg(theme.encrypted_tag)),
             ])).style(bg_style)
         })
         .collect();
@@ -114,13 +125,24 @@ pub fn render_navigation_sidebar(
             .enumerate()
             .map(|(i, sec)| {
                 let is_selected = i == active_sec;
-                let icon = icons.get_icon_for(&sec.name, crate::config::IconType::Section, &icons.section);
-                let style = theme.section_item_style(is_selected);
-                let icon_style = theme.section_icon_style(is_selected);
+                let default_ic = if sec.is_encrypted { &icons.encrypted_note } else { &icons.section };
+                let icon = icons.get_icon_for(&sec.name, crate::config::IconType::Section, default_ic);
+                let style = if sec.is_encrypted && !is_selected {
+                    Style::default().fg(theme.encrypted_tag).add_modifier(Modifier::BOLD)
+                } else {
+                    theme.section_item_style(is_selected)
+                };
+                let icon_style = if sec.is_encrypted {
+                    Style::default().fg(theme.encrypted_tag)
+                } else {
+                    theme.section_icon_style(is_selected)
+                };
+                let lock_badge = if sec.is_encrypted { " [ENC]" } else { "" };
                 let bg_style = theme.section_item_bg_style(is_selected);
                 ListItem::new(Line::from(vec![
                     Span::styled(format!("{} ", icon), icon_style),
                     Span::styled(sec.name.clone(), style),
+                    Span::styled(lock_badge, Style::default().fg(theme.encrypted_tag)),
                 ])).style(bg_style)
             })
             .collect()

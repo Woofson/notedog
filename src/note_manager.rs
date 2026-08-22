@@ -16,6 +16,7 @@ pub struct Section {
     pub name: String,
     pub path: PathBuf,
     pub notes: Vec<NoteFile>,
+    pub is_encrypted: bool,
 }
 
 #[derive(Debug, Clone)]
@@ -23,6 +24,7 @@ pub struct Notebook {
     pub name: String,
     pub path: PathBuf,
     pub sections: Vec<Section>,
+    pub is_encrypted: bool,
 }
 
 #[derive(Debug)]
@@ -119,18 +121,26 @@ impl NoteManager {
                             }
                         }
 
+                        let sec_is_encrypted = sec_path.join(".encrypted").exists()
+                            || (!notes.is_empty() && notes.iter().all(|n| n.is_encrypted));
+
                         sections.push(Section {
                             name: sec_name,
                             path: sec_path,
                             notes,
+                            is_encrypted: sec_is_encrypted,
                         });
                     }
                 }
+
+                let nb_is_encrypted = nb_path.join(".encrypted").exists()
+                    || (!sections.is_empty() && sections.iter().all(|s| s.is_encrypted));
 
                 self.notebooks.push(Notebook {
                     name: nb_name,
                     path: nb_path,
                     sections,
+                    is_encrypted: nb_is_encrypted,
                 });
             }
         }
@@ -157,8 +167,9 @@ impl NoteManager {
     pub fn create_note(&mut self, nb_idx: usize, sec_idx: usize, title: &str, is_encrypted: bool, initial_content: Option<&str>) -> io::Result<PathBuf> {
         if let Some(nb) = self.notebooks.get(nb_idx) {
             if let Some(sec) = nb.sections.get(sec_idx) {
+                let should_encrypt = is_encrypted || sec.is_encrypted || nb.is_encrypted;
                 let sanitized = title.trim().replace(' ', "_");
-                let filename = if is_encrypted {
+                let filename = if should_encrypt {
                     format!("{}.md.enc", sanitized)
                 } else {
                     format!("{}.md", sanitized)
@@ -168,7 +179,7 @@ impl NoteManager {
                     .map(|s| s.to_string())
                     .unwrap_or_else(|| format!("# {}\n\nCreated on Notedog.\n", title));
 
-                if !is_encrypted {
+                if !should_encrypt {
                     fs::write(&path, content)?;
                 } else {
                     if let Ok(bytes) = encrypt_note(&content, "notedog") {
@@ -182,6 +193,104 @@ impl NoteManager {
             }
         }
         Err(io::Error::new(io::ErrorKind::NotFound, "Notebook or Section not found"))
+    }
+
+    pub fn encrypt_section(&mut self, nb_idx: usize, sec_idx: usize, passphrase: &str) -> io::Result<usize> {
+        let (sec_path, notes_to_encrypt) = {
+            let nb = self.notebooks.get(nb_idx).ok_or_else(|| io::Error::new(io::ErrorKind::NotFound, "Notebook not found"))?;
+            let sec = nb.sections.get(sec_idx).ok_or_else(|| io::Error::new(io::ErrorKind::NotFound, "Section not found"))?;
+            (sec.path.clone(), sec.notes.clone())
+        };
+
+        let mut count = 0;
+        for note in notes_to_encrypt {
+            if !note.is_encrypted {
+                let content = fs::read_to_string(&note.path)?;
+                let enc_bytes = crate::crypto::encrypt_note(&content, passphrase)
+                    .map_err(|e| io::Error::new(io::ErrorKind::Other, e.to_string()))?;
+                let enc_path = note.path.with_extension("md.enc");
+                fs::write(&enc_path, enc_bytes)?;
+                if note.path != enc_path {
+                    let _ = fs::remove_file(&note.path);
+                }
+                count += 1;
+            }
+        }
+
+        let marker = sec_path.join(".encrypted");
+        let _ = fs::write(marker, b"NOTEDOG_SECTION_ENC");
+
+        self.reload();
+        Ok(count)
+    }
+
+    pub fn decrypt_section(&mut self, nb_idx: usize, sec_idx: usize, passphrase: &str) -> io::Result<usize> {
+        let (sec_path, notes_to_decrypt) = {
+            let nb = self.notebooks.get(nb_idx).ok_or_else(|| io::Error::new(io::ErrorKind::NotFound, "Notebook not found"))?;
+            let sec = nb.sections.get(sec_idx).ok_or_else(|| io::Error::new(io::ErrorKind::NotFound, "Section not found"))?;
+            (sec.path.clone(), sec.notes.clone())
+        };
+
+        let mut count = 0;
+        for note in notes_to_decrypt {
+            if note.is_encrypted {
+                let raw = fs::read(&note.path)?;
+                let plaintext = crate::crypto::decrypt_note(&raw, passphrase)
+                    .map_err(|e| io::Error::new(io::ErrorKind::Other, e.to_string()))?;
+                let dec_path = note.path.with_extension("").with_extension("md");
+                fs::write(&dec_path, plaintext)?;
+                if note.path != dec_path {
+                    let _ = fs::remove_file(&note.path);
+                }
+                count += 1;
+            }
+        }
+
+        let marker = sec_path.join(".encrypted");
+        if marker.exists() {
+            let _ = fs::remove_file(marker);
+        }
+
+        self.reload();
+        Ok(count)
+    }
+
+    pub fn encrypt_notebook(&mut self, nb_idx: usize, passphrase: &str) -> io::Result<usize> {
+        let (nb_path, sections_count) = {
+            let nb = self.notebooks.get(nb_idx).ok_or_else(|| io::Error::new(io::ErrorKind::NotFound, "Notebook not found"))?;
+            (nb.path.clone(), nb.sections.len())
+        };
+
+        let mut total_count = 0;
+        for s_idx in 0..sections_count {
+            total_count += self.encrypt_section(nb_idx, s_idx, passphrase)?;
+        }
+
+        let marker = nb_path.join(".encrypted");
+        let _ = fs::write(marker, b"NOTEDOG_NOTEBOOK_ENC");
+
+        self.reload();
+        Ok(total_count)
+    }
+
+    pub fn decrypt_notebook(&mut self, nb_idx: usize, passphrase: &str) -> io::Result<usize> {
+        let (nb_path, sections_count) = {
+            let nb = self.notebooks.get(nb_idx).ok_or_else(|| io::Error::new(io::ErrorKind::NotFound, "Notebook not found"))?;
+            (nb.path.clone(), nb.sections.len())
+        };
+
+        let mut total_count = 0;
+        for s_idx in 0..sections_count {
+            total_count += self.decrypt_section(nb_idx, s_idx, passphrase)?;
+        }
+
+        let marker = nb_path.join(".encrypted");
+        if marker.exists() {
+            let _ = fs::remove_file(marker);
+        }
+
+        self.reload();
+        Ok(total_count)
     }
 
     pub fn read_note_raw(&self, path: &Path) -> io::Result<Vec<u8>> {
@@ -420,6 +529,62 @@ mod tests {
         // Delete Notebook
         manager.delete_notebook(nb_idx).unwrap();
         assert!(!manager.notebooks.iter().any(|n| n.name == "TestNB"));
+
+        let _ = fs::remove_dir_all(&temp_dir);
+    }
+
+    #[test]
+    fn test_section_and_notebook_encryption() {
+        let temp_dir = std::env::temp_dir().join("notedog_enc_test_dir");
+        let _ = fs::remove_dir_all(&temp_dir);
+
+        let mut manager = NoteManager::new(temp_dir.clone());
+        manager.create_notebook("Vault").unwrap();
+        let nb_idx = manager.notebooks.iter().position(|n| n.name == "Vault").unwrap();
+
+        manager.create_section(nb_idx, "Classified").unwrap();
+        let sec_idx = manager.notebooks[nb_idx].sections.iter().position(|s| s.name == "Classified").unwrap();
+
+        // Create plaintext notes in section
+        manager.create_note(nb_idx, sec_idx, "Doc1", false, Some("Content 1")).unwrap();
+        manager.create_note(nb_idx, sec_idx, "Doc2", false, Some("Content 2")).unwrap();
+
+        let nb_idx = manager.notebooks.iter().position(|n| n.name == "Vault").unwrap();
+        let sec_idx = manager.notebooks[nb_idx].sections.iter().position(|s| s.name == "Classified").unwrap();
+        assert_eq!(manager.notebooks[nb_idx].sections[sec_idx].notes.len(), 2);
+        assert!(!manager.notebooks[nb_idx].sections[sec_idx].is_encrypted);
+
+        // Encrypt section
+        let count = manager.encrypt_section(nb_idx, sec_idx, "Pass123").unwrap();
+        assert_eq!(count, 2);
+
+        let nb_idx = manager.notebooks.iter().position(|n| n.name == "Vault").unwrap();
+        let sec_idx = manager.notebooks[nb_idx].sections.iter().position(|s| s.name == "Classified").unwrap();
+        assert!(manager.notebooks[nb_idx].sections[sec_idx].is_encrypted);
+        assert!(manager.notebooks[nb_idx].sections[sec_idx].notes.iter().all(|n| n.is_encrypted));
+
+        // Decrypt section
+        let count = manager.decrypt_section(nb_idx, sec_idx, "Pass123").unwrap();
+        assert_eq!(count, 2);
+
+        let nb_idx = manager.notebooks.iter().position(|n| n.name == "Vault").unwrap();
+        let sec_idx = manager.notebooks[nb_idx].sections.iter().position(|s| s.name == "Classified").unwrap();
+        assert!(!manager.notebooks[nb_idx].sections[sec_idx].is_encrypted);
+        assert!(manager.notebooks[nb_idx].sections[sec_idx].notes.iter().all(|n| !n.is_encrypted));
+
+        // Encrypt entire notebook
+        let count = manager.encrypt_notebook(nb_idx, "Pass123").unwrap();
+        assert!(count >= 2);
+
+        let nb_idx = manager.notebooks.iter().position(|n| n.name == "Vault").unwrap();
+        assert!(manager.notebooks[nb_idx].is_encrypted);
+
+        // Decrypt entire notebook
+        let count = manager.decrypt_notebook(nb_idx, "Pass123").unwrap();
+        assert!(count >= 2);
+
+        let nb_idx = manager.notebooks.iter().position(|n| n.name == "Vault").unwrap();
+        assert!(!manager.notebooks[nb_idx].is_encrypted);
 
         let _ = fs::remove_dir_all(&temp_dir);
     }
