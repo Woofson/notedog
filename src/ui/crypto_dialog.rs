@@ -11,11 +11,12 @@ pub fn render_passphrase_modal(
     f: &mut Frame,
     area: Rect,
     prompt_title: &str,
+    input_label: &str,
     input_buffer: &str,
     error_msg: Option<&str>,
     theme: &Theme,
 ) {
-    let popup_area = centered_rect(60, 25, area);
+    let popup_area = centered_rect(64, 26, area);
 
     f.render_widget(Clear, popup_area);
 
@@ -39,7 +40,10 @@ pub fn render_passphrase_modal(
         ])
         .split(popup_area);
 
-    let label = Paragraph::new("Enter Encryption / Decryption Passphrase:");
+    let label = Paragraph::new(Span::styled(
+        input_label,
+        Style::default().fg(theme.foreground).add_modifier(Modifier::BOLD),
+    ));
     f.render_widget(label, inner_chunks[0]);
 
     let masked = "*".repeat(input_buffer.len());
@@ -52,7 +56,7 @@ pub fn render_passphrase_modal(
 
     if let Some(err) = error_msg {
         let err_para = Paragraph::new(Span::styled(
-            format!("⚠️ Error: {}", err),
+            format!("⚠️ {}", err),
             Style::default().fg(Color::Red).add_modifier(Modifier::BOLD),
         ));
         f.render_widget(err_para, inner_chunks[2]);
@@ -60,7 +64,7 @@ pub fn render_passphrase_modal(
 
     let footer = Paragraph::new(Line::from(vec![
         Span::styled(" [Enter] ", Style::default().fg(theme.primary).add_modifier(Modifier::BOLD)),
-        Span::styled("Confirm   ", theme.fg_style()),
+        Span::styled("Submit   ", theme.fg_style()),
         Span::styled(" [Esc] ", Style::default().fg(theme.border).add_modifier(Modifier::BOLD)),
         Span::styled("Cancel", theme.fg_style()),
     ]));

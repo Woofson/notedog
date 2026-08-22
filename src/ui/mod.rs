@@ -156,11 +156,12 @@ pub fn render_ui(f: &mut Frame, app: &mut App) {
 
     match &app.input_mode {
         InputMode::Normal => {}
-        InputMode::PassphrasePrompt { prompt, error } => {
+        InputMode::PassphrasePrompt { prompt, label, error } => {
             crypto_dialog::render_passphrase_modal(
                 f,
                 size,
                 prompt,
+                label,
                 &app.input_buffer,
                 error.as_deref(),
                 &app.theme,

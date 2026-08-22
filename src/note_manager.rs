@@ -293,6 +293,56 @@ impl NoteManager {
         Ok(total_count)
     }
 
+    pub fn change_password_note(&mut self, path: &Path, old_pass: &str, new_pass: &str) -> io::Result<()> {
+        let raw = fs::read(path)?;
+        let plaintext = crate::crypto::decrypt_note(&raw, old_pass)
+            .map_err(|e| io::Error::new(io::ErrorKind::Other, e.to_string()))?;
+        let new_bytes = crate::crypto::encrypt_note(&plaintext, new_pass)
+            .map_err(|e| io::Error::new(io::ErrorKind::Other, e.to_string()))?;
+        fs::write(path, new_bytes)?;
+        self.reload();
+        Ok(())
+    }
+
+    pub fn change_password_section(&mut self, nb_idx: usize, sec_idx: usize, old_pass: &str, new_pass: &str) -> io::Result<usize> {
+        let notes_to_change = {
+            let nb = self.notebooks.get(nb_idx).ok_or_else(|| io::Error::new(io::ErrorKind::NotFound, "Notebook not found"))?;
+            let sec = nb.sections.get(sec_idx).ok_or_else(|| io::Error::new(io::ErrorKind::NotFound, "Section not found"))?;
+            sec.notes.clone()
+        };
+
+        let mut count = 0;
+        for note in notes_to_change {
+            if note.is_encrypted {
+                let raw = fs::read(&note.path)?;
+                let plaintext = crate::crypto::decrypt_note(&raw, old_pass)
+                    .map_err(|e| io::Error::new(io::ErrorKind::Other, e.to_string()))?;
+                let new_bytes = crate::crypto::encrypt_note(&plaintext, new_pass)
+                    .map_err(|e| io::Error::new(io::ErrorKind::Other, e.to_string()))?;
+                fs::write(&note.path, new_bytes)?;
+                count += 1;
+            }
+        }
+
+        self.reload();
+        Ok(count)
+    }
+
+    pub fn change_password_notebook(&mut self, nb_idx: usize, old_pass: &str, new_pass: &str) -> io::Result<usize> {
+        let sections_count = {
+            let nb = self.notebooks.get(nb_idx).ok_or_else(|| io::Error::new(io::ErrorKind::NotFound, "Notebook not found"))?;
+            nb.sections.len()
+        };
+
+        let mut total_count = 0;
+        for s_idx in 0..sections_count {
+            total_count += self.change_password_section(nb_idx, s_idx, old_pass, new_pass)?;
+        }
+
+        self.reload();
+        Ok(total_count)
+    }
+
     pub fn read_note_raw(&self, path: &Path) -> io::Result<Vec<u8>> {
         fs::read(path)
     }
@@ -585,6 +635,49 @@ mod tests {
 
         let nb_idx = manager.notebooks.iter().position(|n| n.name == "Vault").unwrap();
         assert!(!manager.notebooks[nb_idx].is_encrypted);
+
+        let _ = fs::remove_dir_all(&temp_dir);
+    }
+
+    #[test]
+    fn test_change_password() {
+        let temp_dir = std::env::temp_dir().join("notedog_chpass_test_dir");
+        let _ = fs::remove_dir_all(&temp_dir);
+
+        let mut manager = NoteManager::new(temp_dir.clone());
+        manager.create_notebook("SecuredVault").unwrap();
+        let nb_idx = manager.notebooks.iter().position(|n| n.name == "SecuredVault").unwrap();
+
+        manager.create_section(nb_idx, "TopSecret").unwrap();
+        let sec_idx = manager.notebooks[nb_idx].sections.iter().position(|s| s.name == "TopSecret").unwrap();
+
+        manager.create_note(nb_idx, sec_idx, "SecretDoc", false, Some("Confidential message")).unwrap();
+        let nb_idx = manager.notebooks.iter().position(|n| n.name == "SecuredVault").unwrap();
+        let sec_idx = manager.notebooks[nb_idx].sections.iter().position(|s| s.name == "TopSecret").unwrap();
+
+        // Encrypt section with OldPass
+        manager.encrypt_section(nb_idx, sec_idx, "OldPass").unwrap();
+        let nb_idx = manager.notebooks.iter().position(|n| n.name == "SecuredVault").unwrap();
+        let sec_idx = manager.notebooks[nb_idx].sections.iter().position(|s| s.name == "TopSecret").unwrap();
+        let note_path = manager.notebooks[nb_idx].sections[sec_idx].notes[0].path.clone();
+
+        // Change password on note
+        manager.change_password_note(&note_path, "OldPass", "NewPass").unwrap();
+        let raw = manager.read_note_raw(&note_path).unwrap();
+        assert!(crate::crypto::decrypt_note(&raw, "OldPass").is_err());
+        assert_eq!(crate::crypto::decrypt_note(&raw, "NewPass").unwrap(), "Confidential message");
+
+        // Change password on entire section
+        manager.change_password_section(nb_idx, sec_idx, "NewPass", "BrandNewPass").unwrap();
+        let raw = manager.read_note_raw(&note_path).unwrap();
+        assert!(crate::crypto::decrypt_note(&raw, "NewPass").is_err());
+        assert_eq!(crate::crypto::decrypt_note(&raw, "BrandNewPass").unwrap(), "Confidential message");
+
+        // Change password on entire notebook
+        manager.change_password_notebook(nb_idx, "BrandNewPass", "FinalPass").unwrap();
+        let raw = manager.read_note_raw(&note_path).unwrap();
+        assert!(crate::crypto::decrypt_note(&raw, "BrandNewPass").is_err());
+        assert_eq!(crate::crypto::decrypt_note(&raw, "FinalPass").unwrap(), "Confidential message");
 
         let _ = fs::remove_dir_all(&temp_dir);
     }
